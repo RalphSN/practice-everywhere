@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智慧抽卡機</title>
+  </head>
+  <body>
+    <button id="draw-btn">抽一張新卡</button>
+
+    <div id="card-container">
+      <p>目前沒有資料，請點擊抽卡</p>
+    </div>
+
+    <script>
+      const btn = document.querySelector("#draw-btn");
+      btn.addEventListener("click", startDraw);
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function startDraw() {
+        // 開始抽卡
+        // 模擬延遲
+        await delay(1000);
+        const response = await fetch("https://randomuser.me/api/");
+        const data = await response.json();
+
+        console.log("抽卡資料為:", data);
+        const user = data.results[0];
+        const avatar = user.picture.large;
+        const fullName = `${user.name.first} ${user.name.last}`;
+        const container = document.querySelector("#card-container");
+        container.innerHTML = `
+          <div class="card">
+            <img src="${avatar}" alt="頭像">
+            <h2>${fullName}</h2>
+          </div>
+        `;
+
+        // 存入localStorage
+        const userString = JSON.stringify(user);
+        localStorage.setItem("last card", userString);
+      }
+
+      // 如果localStorage裡面有資料則直接取用
+      const savedCardString = localStorage.getItem("last card");
+      if (savedCardString) {
+        const user = JSON.parse(savedCardString);
+        const avatar = user.picture.large;
+        const fullName = `${user.name.first} ${user.name.last}`;
+        const container = document.querySelector("#card-container");
+
+        container.innerHTML = `
+          <div class="card">
+            <img src="${avatar}" alt="頭像">
+            <h2>${fullName}</h2>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>

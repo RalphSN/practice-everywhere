@@ -1,0 +1,182 @@
+body {
+  background-color: #080808;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080808;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f3ff;
+}
+
+/* Glass / Card Styles */
+.glass-card {
+  background: rgba(
+    20,
+    20,
+    23,
+    0.6
+  ); /* Slightly darker base for pop-out readability */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: absolute; /* Key for pop-out effect */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* Default height matches placeholder */
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Pop-out Effect on Hover */
+.card-wrapper:hover .glass-card {
+  height: auto; /* Allow expansion */
+  min-height: 100%;
+  z-index: 50; /* Bring to front */
+  background: rgba(10, 10, 12, 0.95); /* Solid bg to cover items below */
+  border-color: rgba(0, 243, 255, 0.4);
+  box-shadow:
+    0 15px 40px -10px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(0, 243, 255, 0.1);
+  transform: scale(1.02);
+}
+
+/* Shine Effect */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  transition: 0.5s;
+  pointer-events: none;
+}
+
+.card-wrapper:hover .glass-card::before {
+  left: 100%;
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-enter {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+/* Minimal Input */
+.minimal-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+.minimal-input:focus {
+  border-bottom-color: #00f3ff;
+  outline: none;
+  box-shadow: 0 4px 20px -5px rgba(0, 243, 255, 0.3);
+}
+
+/* Filter Buttons */
+.filter-btn {
+  position: relative;
+  transition: all 0.3s ease;
+}
+.filter-btn::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background: #00f3ff;
+  transition: width 0.3s ease;
+}
+.filter-btn:hover::after {
+  width: 100%;
+}
+.filter-btn.active {
+  color: #00f3ff;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+.filter-btn.active::after {
+  width: 100%;
+  box-shadow: 0 0 10px #00f3ff;
+}
+
+/* Sub Filter Buttons */
+.sub-filter-btn {
+  font-size: 0.7rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #888;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+}
+.sub-filter-btn:hover {
+  border-color: rgba(0, 243, 255, 0.3);
+  color: #fff;
+}
+.sub-filter-btn.active {
+  background: rgba(0, 243, 255, 0.1);
+  border-color: #00f3ff;
+  color: #00f3ff;
+}
+
+/* Loading Spinner */
+.loader {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-left-color: #00f3ff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Canvas */
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.4;
+}

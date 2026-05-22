@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方塊世界 MMORPG</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* 魔獸風格 UI 介面 */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 讓點擊穿透到 3D 畫布 */
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* 玩家頭像框 */
+        #player-frame {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #555;
+            border-radius: 5px;
+            padding: 5px;
+            width: 250px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .portrait {
+            width: 50px;
+            height: 50px;
+            background-color: #f1c27d;
+            border: 2px solid #222;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .bars {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 18px;
+            background-color: #222;
+            border: 1px solid #111;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.2s;
+        }
+
+        .hp-fill { background-color: #2ecc71; }
+        .mp-fill { background-color: #3498db; }
+
+        .bar-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 18px;
+            text-shadow: 1px 1px 1px #000;
+        }
+
+        .name-level {
+            color: gold;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            text-shadow: 1px 1px 1px #000;
+        }
+        
+        .buff-icons {
+            position: absolute;
+            top: 65px;
+            left: 20px;
+            display: flex;
+            gap: 5px;
+        }
+        .buff-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #d35400;
+            border: 1px solid #fff;
+            border-radius: 3px;
+            display: none;
+            font-size: 10px;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+        }
+
+        /* 目標頭像框 */
+        #target-frame {
+            position: absolute;
+            top: 20px;
+            left: 300px;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #555;
+            border-radius: 5px;
+            padding: 5px;
+            width: 250px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        #target-frame .portrait { background-color: #e74c3c; }
+
+        /* 動作條 */
+        #action-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #444;
+        }
+
+        .action-slot {
+            width: 50px;
+            height: 50px;
+            background-color: #333;
+            border: 2px solid #111;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .action-key {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            color: #ccc;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .cooldown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+        }
+
+        /* 詠唱條 */
+        #cast-bar-container {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            background-color: #222;
+            border: 2px solid #555;
+            border-radius: 4px;
+            display: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        #cast-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #f39c12;
+        }
+        #cast-bar-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+            text-shadow: 1px 1px 1px #000;
+        }
+
+        /* 任務追蹤 */
+        #quest-tracker {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 200px;
+            color: white;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .quest-title {
+            color: gold;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 2px;
+        }
+
+        .quest-objective {
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        /* 背包系統 */
+        #inventory-panel {
+            position: absolute;
+            top: 200px;
+            right: 20px;
+            width: 220px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+        }
+        .inv-header {
+            color: gold;
+            font-weight: bold;
+            border-bottom: 1px solid #555;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .close-btn {
+            cursor: pointer;
+            color: #ccc;
+        }
+        .close-btn:hover { color: white; }
+        #inv-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .inv-slot {
+            width: 45px;
+            height: 45px;
+            background-color: #333;
+            border: 1px solid #111;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .inv-slot:hover { border-color: #f1c40f; }
+        .item-icon { width: 35px; height: 35px; border-radius: 4px; }
+        .item-qty {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            color: white;
+            font-size: 10px;
+            text-shadow: 1px 1px 1px #000;
+        }
+
+        #toggle-inv-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #toggle-inv-btn:hover { background: rgba(50,50,50,0.8); }
+
+        /* 聊天框 */
+        #chat-box {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            width: 300px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            font-size: 13px;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .msg-sys { color: #f1c40f; }
+        .msg-combat { color: #e74c3c; }
+        .msg-loot { color: #2ecc71; }
+
+        /* 浮動戰鬥文字 */
+        .floating-text {
+            position: absolute;
+            color: red;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1000;
+            animation: floatUp 1s forwards ease-out;
+        }
+
+        .floating-text.heal { color: #2ecc71; }
+        .floating-text.info { color: #3498db; }
+
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            20% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D 畫布容器 -->
+    <div id="game-container"></div>
+
+    <!-- UI 覆蓋層 -->
+    <div class="ui-layer">
+        <!-- 玩家頭像 -->
+        <div id="player-frame">
+            <div class="portrait">騎士</div>
+            <div class="bars">
+                <div class="name-level" id="player-name">方塊步兵 Lv.1</div>
+                <div class="bar-container">
+                    <div class="bar-fill hp-fill" id="player-hp-fill"></div>
+                    <div class="bar-text" id="player-hp-text">100 / 100</div>
+                </div>
+                <div class="bar-container" style="margin-top: 2px;">
+                    <div class="bar-fill mp-fill" id="player-mp-fill"></div>
+                    <div class="bar-text" id="player-mp-text">50 / 50</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buff-icons">
+            <div class="buff-icon" id="buff-attack" title="攻擊力提升">劍</div>
+        </div>
+
+        <!-- 目標頭像 -->
+        <div id="target-frame">
+            <div class="portrait">野豬</div>
+            <div class="bars">
+                <div class="name-level" id="target-name">方塊野豬 Lv.1</div>
+                <div class="bar-container">
+                    <div class="bar-fill hp-fill" id="target-hp-fill"></div>
+                    <div class="bar-text" id="target-hp-text">50 / 50</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任務追蹤 -->
+        <div id="quest-tracker">
+            <div class="quest-title">正在進行的任務</div>
+            <div class="quest-objective" id="quest-obj-1">- 擊殺方塊野豬：0 / 3</div>
+        </div>
+
+        <!-- 聊天系統 -->
+        <div id="chat-box">
+            <div id="chat-messages">
+                <div class="msg-sys">[系統] 歡迎來到艾澤拉斯方塊世界！</div>
+                <div class="msg-sys">[系統] 使用 W/S 前進後退，A/D 轉向，Q/E 平移。</div>
+                <div class="msg-sys">[系統] 擊殺怪物有機率掉落物品，按 B 打開背包使用。</div>
+            </div>
+        </div>
+
+        <!-- 詠唱條 -->
+        <div id="cast-bar-container">
+            <div id="cast-bar-fill"></div>
+            <div id="cast-bar-text">施法中...</div>
+        </div>
+
+        <!-- 動作快捷列 -->
+        <div id="action-bar">
+            <div class="action-slot interactive" style="background-color: #8b0000;" onclick="useSkill1()">
+                <span class="action-key">1</span>
+                英勇<br>打擊
+                <div class="cooldown" id="cd-1"></div>
+            </div>
+            <div class="action-slot interactive" style="background-color: #b8860b;" onclick="useSkill2()">
+                <span class="action-key">2</span>
+                聖光術
+                <div class="cooldown" id="cd-2"></div>
+            </div>
+            <div class="action-slot interactive" style="background-color: #d35400;" onclick="startCast(3)">
+                <span class="action-key">3</span>
+                隕石術
+                <div class="cooldown" id="cd-3"></div>
+            </div>
+            <div class="action-slot interactive" style="background-color: #8e44ad;" onclick="startCast(4)">
+                <span class="action-key">4</span>
+                召喚<br>惡魔
+                <div class="cooldown" id="cd-4"></div>
+            </div>
+        </div>
+
+        <!-- 背包面板 -->
+        <div id="inventory-panel" class="interactive">
+            <div class="inv-header">
+                <span>背包 (B)</span>
+                <span class="close-btn" onclick="toggleInventory()">X</span>
+            </div>
+            <div id="inv-grid">
+                <!-- 插槽由 JS 生成 -->
+            </div>
+        </div>
+        <button id="toggle-inv-btn" class="interactive" onclick="toggleInventory()">背包 (B)</button>
+
+    </div>
+
+    <!-- 載入 Three.js 與 OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // --- 遊戲全域變數 ---
+        let scene, camera, renderer, controls;
+        let playerObj;
+        let playerPet = null;
+        let enemies = [];
+        let droppedItems = [];
+        let meteors = [];
+        let time = 0;
+        let lastTime = performance.now();
+        
+        const keys = { w: false, a: false, s: false, d: false, q: false, e: false, space: false };
+        let moveDirection = new THREE.Vector3();
+        let isJumping = false;
+        let yVelocity = 0;
+        
+        // 遊戲狀態資料
+        const gameState = {
+            player: {
+                level: 1,
+                hp: 100, maxHp: 100,
+                mp: 50, maxMp: 50,
+                baseDamage: 15,
+                buffDamage: 0,
+                attackRange: 4,
+                speed: 10,
+                target: null
+            },
+            skills: {
+                skill1: { cd: 1500, lastUsed: 0 },
+                skill2: { cd: 3000, lastUsed: 0, cost: 15, heal: 30 },
+                skill3: { cd: 8000, lastUsed: 0, cost: 20, castTime: 2000, name: "隕石術" },
+                skill4: { cd: 15000, lastUsed: 0, cost: 30, castTime: 3000, name: "召喚惡魔" }
+            },
+            casting: {
+                isCasting: false,
+                skillId: null,
+                timer: 0,
+                duration: 0
+            },
+            quest: {
+                boarsKilled: 0, boarsNeeded: 3, completed: false
+            },
+            inventory: [] // 存放 { id: 'red_potion', qty: 1 }
+        };
+
+        const ITEMS = {
+            'red_potion': { name: '紅藥水', color: '#e74c3c', effect: () => healPlayer(30) },
+            'blue_potion': { name: '藍藥水', color: '#3498db', effect: () => restoreMp(30) },
+            'food': { name: '烤肉', color: '#d35400', effect: () => applyBuff() }
+        };
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let targetRing;
+
+        // --- 初始化 ---
+        function init() {
+            const container = document.getElementById('game-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.minDistance = 5;
+            controls.maxDistance = 30;
+            controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 50; dirLight.shadow.camera.bottom = -50;
+            dirLight.shadow.camera.left = -50; dirLight.shadow.camera.right = 50;
+            dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
+            scene.add(dirLight);
+
+            createWorld();
+            createPlayer();
+            spawnEnemies();
+            initInventoryUI();
+
+            const ringGeo = new THREE.BoxGeometry(2.5, 0.1, 2.5);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+            targetRing = new THREE.Mesh(ringGeo, ringMat);
+            targetRing.visible = false;
+            scene.add(targetRing);
+
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+            renderer.domElement.addEventListener('pointerdown', onPointerDown, false);
+
+            animate();
+        }
+
+        function createPixelTexture(colorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16; canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = colorHex;
+            ctx.fillRect(0, 0, 16, 16);
+            for(let i=0; i<40; i++){
+                ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.1})`;
+                ctx.fillRect(Math.floor(Math.random()*16), Math.floor(Math.random()*16), 1, 1);
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        function createWorld() {
+            const grassTex = createPixelTexture('#4caf50');
+            grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping;
+            grassTex.repeat.set(50, 50);
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({ map: grassTex }));
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const trunkMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#795548') });
+            const leavesMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#2e7d32') });
+            
+            for (let i = 0; i < 30; i++) {
+                const x = (Math.random() - 0.5) * 150;
+                const z = (Math.random() - 0.5) * 150;
+                if (Math.abs(x) < 10 && Math.abs(z) < 10) continue;
+
+                const tree = new THREE.Group();
+                const trunk = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), trunkMat);
+                trunk.position.y = 2; trunk.castShadow = true; trunk.receiveShadow = true;
+                const leaves = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), leavesMat);
+                leaves.position.y = 5; leaves.castShadow = true; leaves.receiveShadow = true;
+
+                tree.add(trunk); tree.add(leaves);
+                tree.position.set(x, 0, z);
+                scene.add(tree);
+            }
+        }
+
+        function createPlayer() {
+            playerObj = new THREE.Group();
+            const bodyMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#2980b9') });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.5, 0.8), bodyMat);
+            body.position.y = 0.75; body.castShadow = true;
+
+            const headMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#f1c27d') });
+            const head = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), headMat);
+            head.position.y = 2; head.castShadow = true;
+
+            const swordMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+            const sword = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2, 0.4), swordMat);
+            sword.position.set(0.8, 1, 0.5); sword.rotation.x = Math.PI / 4;
+            sword.castShadow = true; sword.name = "weapon";
+
+            playerObj.add(body); playerObj.add(head); playerObj.add(sword);
+            scene.add(playerObj);
+
+            // 初始化攝影機位置
+            camera.position.set(playerObj.position.x, playerObj.position.y + 10, playerObj.position.z + 15);
+            controls.target.copy(playerObj.position);
+            controls.update();
+        }
+
+        // --- 類別定義 (敵人、寵物、掉落物) ---
+        class Enemy {
+            constructor(x, z) {
+                this.hp = 50; this.maxHp = 50; this.name = "方塊野豬"; this.isDead = false;
+                this.mesh = new THREE.Group();
+                this.originX = x; this.originZ = z;
+
+                const pigMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#a0522d') });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 2), pigMat);
+                body.position.y = 0.5; body.castShadow = true;
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: 0xffa07a }));
+                snout.position.set(0, 0.5, 1.1);
+
+                this.mesh.add(body); this.mesh.add(snout);
+                this.mesh.position.set(x, 0, z);
+                
+                this.mesh.userData = { isEnemy: true, ref: this };
+                body.userData = { isEnemy: true, ref: this };
+                snout.userData = { isEnemy: true, ref: this };
+
+                scene.add(this.mesh);
+                this.state = 'idle'; this.stateTimer = 0; this.targetPos = new THREE.Vector3(); this.lastAttackTime = 0;
+            }
+
+            update(delta) {
+                if (this.isDead) return;
+                const distToPlayer = this.mesh.position.distanceTo(playerObj.position);
+
+                if (distToPlayer < 8 && gameState.player.hp > 0) this.state = 'chase';
+
+                if (this.state === 'idle') {
+                    this.stateTimer -= delta;
+                    if (this.stateTimer <= 0) {
+                        this.targetPos.set(this.originX + (Math.random() - 0.5) * 10, 0, this.originZ + (Math.random() - 0.5) * 10);
+                        this.state = 'wander'; this.stateTimer = 2 + Math.random() * 3;
+                    }
+                } else if (this.state === 'wander') {
+                    this.moveTo(this.targetPos, 2 * delta);
+                    this.stateTimer -= delta;
+                    if (this.stateTimer <= 0 || this.mesh.position.distanceTo(this.targetPos) < 0.5) {
+                        this.state = 'idle'; this.stateTimer = 1 + Math.random() * 2;
+                    }
+                } else if (this.state === 'chase') {
+                    if (distToPlayer > 15) this.state = 'return';
+                    else if (distToPlayer > 1.5) this.moveTo(playerObj.position, 4 * delta);
+                    else {
+                        const now = performance.now();
+                        if (now - this.lastAttackTime > 2000) { attackPlayer(5); this.lastAttackTime = now; }
+                    }
+                } else if (this.state === 'return') {
+                    this.moveTo(new THREE.Vector3(this.originX, 0, this.originZ), 3 * delta);
+                    if (this.mesh.position.distanceTo(new THREE.Vector3(this.originX, 0, this.originZ)) < 1) {
+                        this.state = 'idle'; this.hp = this.maxHp; updateTargetUI();
+                    }
+                }
+            }
+
+            moveTo(targetVec, speed) {
+                const dir = new THREE.Vector3().subVectors(targetVec, this.mesh.position);
+                dir.y = 0;
+                if (dir.lengthSq() > 0.01) {
+                    dir.normalize();
+                    this.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+                    this.mesh.position.addScaledVector(dir, speed);
+                    this.mesh.position.y = Math.abs(Math.sin(performance.now() * 0.01)) * 0.2;
+                }
+            }
+
+            takeDamage(amount) {
+                if(this.isDead) return;
+                this.hp -= amount; if (this.hp < 0) this.hp = 0;
+                this.state = 'chase';
+                showFloatingText(amount, this.mesh.position);
+                addChat(`你對 ${this.name} 造成 ${amount} 傷害。`, 'msg-combat');
+                
+                this.mesh.children[0].material.color.setHex(0xff0000);
+                setTimeout(() => { if(!this.isDead) this.mesh.children[0].material.color.setHex(0xffffff); }, 200);
+
+                if (this.hp <= 0) this.die();
+                if (gameState.player.target === this) updateTargetUI();
+            }
+
+            die() {
+                this.isDead = true;
+                this.mesh.rotation.x = Math.PI / 2; this.mesh.position.y = 0.5;
+                this.mesh.children[0].material.color.setHex(0x555555);
+                addChat(`${this.name} 死亡。獲得 50 經驗。`, 'msg-loot');
+                
+                // 掉落物品判定
+                const roll = Math.random();
+                if(roll < 0.3) createLoot('red_potion', this.mesh.position);
+                else if(roll < 0.6) createLoot('blue_potion', this.mesh.position);
+                else if(roll < 0.8) createLoot('food', this.mesh.position);
+
+                if (gameState.player.target === this) {
+                    gameState.player.target = null;
+                    document.getElementById('target-frame').style.display = 'none';
+                    targetRing.visible = false;
+                }
+
+                if (!gameState.quest.completed) {
+                    gameState.quest.boarsKilled++;
+                    document.getElementById('quest-obj-1').innerText = `- 擊殺方塊野豬：${gameState.quest.boarsKilled} / ${gameState.quest.boarsNeeded}`;
+                    if (gameState.quest.boarsKilled >= gameState.quest.boarsNeeded) {
+                        gameState.quest.completed = true;
+                        document.getElementById('quest-obj-1').style.color = '#2ecc71';
+                        addChat('任務完成！等級提升！', 'msg-sys');
+                        levelUp();
+                    }
+                }
+
+                setTimeout(() => {
+                    scene.remove(this.mesh);
+                    enemies = enemies.filter(e => e !== this);
+                    setTimeout(() => { enemies.push(new Enemy(this.originX, this.originZ)); }, 5000);
+                }, 3000);
+            }
+        }
+
+        class Pet {
+            constructor(x, z) {
+                this.mesh = new THREE.Group();
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color: 0x8e44ad }));
+                body.position.y = 0.4; body.castShadow = true;
+                this.mesh.add(body);
+                this.mesh.position.set(x, 0, z);
+                scene.add(this.mesh);
+                this.lastAttackTime = 0;
+            }
+            update(delta) {
+                // 跟隨玩家或攻擊目標
+                let targetPos = playerObj.position;
+                let isAttacking = false;
+                const pTarget = gameState.player.target;
+
+                if (pTarget && !pTarget.isDead) {
+                    targetPos = pTarget.mesh.position;
+                    isAttacking = true;
+                }
+
+                const dist = this.mesh.position.distanceTo(targetPos);
+                if (isAttacking && dist < 2) {
+                    // 攻擊
+                    const now = performance.now();
+                    if (now - this.lastAttackTime > 1500) {
+                        pTarget.takeDamage(10);
+                        this.lastAttackTime = now;
+                        // 攻擊動畫
+                        this.mesh.position.y = 1;
+                        setTimeout(()=>{ if(this.mesh) this.mesh.position.y = 0; }, 100);
+                    }
+                } else if (dist > (isAttacking ? 1 : 3)) {
+                    // 移動
+                    const dir = new THREE.Vector3().subVectors(targetPos, this.mesh.position);
+                    dir.y = 0;
+                    if (dir.lengthSq() > 0) {
+                        dir.normalize();
+                        this.mesh.position.addScaledVector(dir, 6 * delta);
+                        this.mesh.rotation.x += 5 * delta; // 滾動效果
+                    }
+                }
+            }
+        }
+
+        function spawnEnemies() {
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2;
+                const r = 15 + Math.random() * 10;
+                enemies.push(new Enemy(Math.cos(angle) * r, Math.sin(angle) * r));
+            }
+        }
+
+        // --- 物品掉落與拾取 ---
+        function createLoot(type, pos) {
+            const itemData = ITEMS[type];
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: itemData.color }));
+            mesh.position.set(pos.x + (Math.random()-0.5), 0.25, pos.z + (Math.random()-0.5));
+            scene.add(mesh);
+            droppedItems.push({ type: type, mesh: mesh });
+        }
+
+        function updateLoot() {
+            for (let i = droppedItems.length - 1; i >= 0; i--) {
+                const item = droppedItems[i];
+                item.mesh.rotation.y += 0.05;
+                if (item.mesh.position.distanceTo(playerObj.position) < 1.5) {
+                    // 拾取
+                    addToInventory(item.type);
+                    showFloatingText(`+${ITEMS[item.type].name}`, playerObj.position, false, true);
+                    addChat(`拾取物品：${ITEMS[item.type].name}`, 'msg-loot');
+                    scene.remove(item.mesh);
+                    droppedItems.splice(i, 1);
+                }
+            }
+        }
+
+        function addToInventory(type) {
+            let found = gameState.inventory.find(i => i.id === type);
+            if (found) found.qty++;
+            else if (gameState.inventory.length < 12) gameState.inventory.push({ id: type, qty: 1 });
+            else addChat("背包已滿！", "msg-sys");
+            renderInventory();
+        }
+
+        // --- 輸入處理 ---
+        function onKeyDown(event) {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key)) keys[key] = true;
+            if (key === '1') useSkill1();
+            if (key === '2') useSkill2();
+            if (key === '3') startCast(3);
+            if (key === '4') startCast(4);
+            if (key === 'b') toggleInventory();
+        }
+
+        function onKeyUp(event) {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key)) keys[key] = false;
+        }
+
+        function onPointerDown(event) {
+            if(event.target.closest('.ui-layer') && !event.target.closest('#game-container')) return; // 點到 UI 不選怪
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(enemies.map(e => e.mesh), true);
+            if (intersects.length > 0) {
+                const enemy = intersects[0].object.userData.ref;
+                if (enemy && !enemy.isDead) {
+                    gameState.player.target = enemy;
+                    updateTargetUI();
+                }
+            } else if (event.button === 0) {
+                gameState.player.target = null;
+                document.getElementById('target-frame').style.display = 'none';
+                targetRing.visible = false;
+            }
+        }
+
+        // --- 詠唱系統 ---
+        function startCast(skillId) {
+            const skill = gameState.skills[`skill${skillId}`];
+            if (performance.now() - skill.lastUsed < skill.cd) { addChat("技能冷卻中！", "msg-sys"); return; }
+            if (gameState.player.mp < skill.cost) { addChat("法力不足！", "msg-sys"); return; }
+            if (skillId === 3 && !gameState.player.target) { addChat("沒有目標！", "msg-sys"); return; }
+
+            // 開始詠唱
+            gameState.casting.isCasting = true;
+            gameState.casting.skillId = skillId;
+            gameState.casting.timer = 0;
+            gameState.casting.duration = skill.castTime;
+            
+            document.getElementById('cast-bar-container').style.display = 'block';
+            document.getElementById('cast-bar-text').innerText = `詠唱 ${skill.name}...`;
+            document.getElementById('cast-bar-fill').style.width = '0%';
+        }
+
+        function cancelCast() {
+            if (!gameState.casting.isCasting) return;
+            gameState.casting.isCasting = false;
+            document.getElementById('cast-bar-container').style.display = 'none';
+            addChat("詠唱中斷！", "msg-sys");
+        }
+
+        function finishCast() {
+            gameState.casting.isCasting = false;
+            document.getElementById('cast-bar-container').style.display = 'none';
+            const skillId = gameState.casting.skillId;
+            const skill = gameState.skills[`skill${skillId}`];
+            
+            skill.lastUsed = performance.now();
+            gameState.player.mp -= skill.cost;
+            startCooldownUI(skillId, skill.cd);
+            updatePlayerUI();
+
+            if (skillId === 3) executeMeteor();
+            else if (skillId === 4) executeSummon();
+        }
+
+        // --- 技能邏輯 ---
+        function useSkill1() {
+            if(gameState.casting.isCasting) cancelCast();
+            const skill = gameState.skills.skill1;
+            if (performance.now() - skill.lastUsed < skill.cd) return;
+            const target = gameState.player.target;
+            if (!target) { addChat("沒有目標！", "msg-sys"); return; }
+            if (playerObj.position.distanceTo(target.mesh.position) > gameState.player.attackRange) { addChat("距離太遠！", "msg-sys"); return; }
+
+            skill.lastUsed = performance.now();
+            startCooldownUI(1, skill.cd);
+            const weapon = playerObj.getObjectByName("weapon");
+            if (weapon) {
+                weapon.rotation.x -= Math.PI / 2;
+                setTimeout(() => { if(weapon) weapon.rotation.x += Math.PI / 2; }, 200);
+            }
+            playerObj.lookAt(target.mesh.position.x, playerObj.position.y, target.mesh.position.z);
+            let dmg = gameState.player.baseDamage + gameState.player.buffDamage + Math.floor(Math.random() * 5);
+            target.takeDamage(dmg);
+        }
+
+        function useSkill2() {
+            if(gameState.casting.isCasting) cancelCast();
+            const skill = gameState.skills.skill2;
+            if (performance.now() - skill.lastUsed < skill.cd) return;
+            if (gameState.player.mp < skill.cost) { addChat("法力不足！", "msg-sys"); return; }
+
+            skill.lastUsed = performance.now();
+            gameState.player.mp -= skill.cost;
+            healPlayer(skill.heal);
+            startCooldownUI(2, skill.cd);
+            
+            playerObj.children[0].material.color.setHex(0xffff00);
+            setTimeout(() => { playerObj.children[0].material.color.setHex(0xffffff); }, 300);
+        }
+
+        function executeMeteor() {
+            const target = gameState.player.target;
+            if(!target || target.isDead) return;
+            addChat("天降隕石！", "msg-combat");
+            
+            // 建立隕石實體
+            const meteorMat = new THREE.MeshLambertMaterial({ color: 0xe74c3c, emissive: 0x550000 });
+            const meteor = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), meteorMat);
+            meteor.position.set(target.mesh.position.x, 20, target.mesh.position.z);
+            scene.add(meteor);
+            
+            meteors.push({
+                mesh: meteor,
+                targetX: target.mesh.position.x,
+                targetZ: target.mesh.position.z
+            });
+        }
+
+        function updateMeteors(delta) {
+            for (let i = meteors.length - 1; i >= 0; i--) {
+                const m = meteors[i];
+                m.mesh.position.y -= 30 * delta;
+                m.mesh.rotation.x += 5 * delta;
+                m.mesh.rotation.y += 5 * delta;
+                
+                if (m.mesh.position.y <= 0) {
+                    // 爆炸傷害
+                    scene.remove(m.mesh);
+                    enemies.forEach(e => {
+                        if (!e.isDead && e.mesh.position.distanceTo(new THREE.Vector3(m.targetX, 0, m.targetZ)) < 5) {
+                            e.takeDamage(40 + Math.floor(Math.random() * 10));
+                        }
+                    });
+                    meteors.splice(i, 1);
+                    // 簡單畫面震動
+                    camera.position.y += 1;
+                    setTimeout(() => { camera.position.y -= 1; }, 50);
+                }
+            }
+        }
+
+        function executeSummon() {
+            addChat("召喚方塊惡魔！", "msg-sys");
+            if (playerPet) { scene.remove(playerPet.mesh); }
+            playerPet = new Pet(playerObj.position.x + 2, playerObj.position.z + 2);
+        }
+
+        // --- 物品與狀態效果 ---
+        function healPlayer(amount) {
+            gameState.player.hp += amount;
+            if (gameState.player.hp > gameState.player.maxHp) gameState.player.hp = gameState.player.maxHp;
+            updatePlayerUI();
+            showFloatingText(`+${amount}`, playerObj.position, true);
+        }
+
+        function restoreMp(amount) {
+            gameState.player.mp += amount;
+            if (gameState.player.mp > gameState.player.maxMp) gameState.player.mp = gameState.player.maxMp;
+            updatePlayerUI();
+            showFloatingText(`+${amount} MP`, playerObj.position, false, true);
+        }
+
+        function applyBuff() {
+            gameState.player.buffDamage = 20;
+            addChat("獲得攻擊力提升 Buff！", "msg-sys");
+            document.getElementById('buff-attack').style.display = 'block';
+            playerObj.children[0].material.color.setHex(0xffaa00);
+            
+            setTimeout(() => {
+                gameState.player.buffDamage = 0;
+                addChat("Buff 效果結束。", "msg-sys");
+                document.getElementById('buff-attack').style.display = 'none';
+                playerObj.children[0].material.color.setHex(0xffffff);
+            }, 15000); // 15秒
+        }
+
+        // --- UI 更新 ---
+        function toggleInventory() {
+            const panel = document.getElementById('inventory-panel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function initInventoryUI() {
+            const grid = document.getElementById('inv-grid');
+            grid.innerHTML = '';
+            for(let i=0; i<12; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'inv-slot';
+                slot.id = `inv-slot-${i}`;
+                slot.onclick = () => useItem(i);
+                grid.appendChild(slot);
+            }
+            renderInventory();
+        }
+
+        function renderInventory() {
+            for(let i=0; i<12; i++) {
+                const slot = document.getElementById(`inv-slot-${i}`);
+                slot.innerHTML = '';
+                if(i < gameState.inventory.length) {
+                    const item = gameState.inventory[i];
+                    const data = ITEMS[item.id];
+                    const icon = document.createElement('div');
+                    icon.className = 'item-icon';
+                    icon.style.backgroundColor = data.color;
+                    icon.title = data.name;
+                    
+                    const qty = document.createElement('div');
+                    qty.className = 'item-qty';
+                    qty.innerText = item.qty;
+                    
+                    slot.appendChild(icon);
+                    slot.appendChild(qty);
+                }
+            }
+        }
+
+        function useItem(index) {
+            if(index >= gameState.inventory.length) return;
+            const item = gameState.inventory[index];
+            ITEMS[item.id].effect();
+            item.qty--;
+            if(item.qty <= 0) gameState.inventory.splice(index, 1);
+            renderInventory();
+        }
+
+        function updatePlayerUI() {
+            document.getElementById('player-hp-fill').style.width = (gameState.player.hp / gameState.player.maxHp * 100) + '%';
+            document.getElementById('player-mp-fill').style.width = (gameState.player.mp / gameState.player.maxMp * 100) + '%';
+            document.getElementById('player-hp-text').innerText = `${gameState.player.hp} / ${gameState.player.maxHp}`;
+            document.getElementById('player-mp-text').innerText = `${gameState.player.mp} / ${gameState.player.maxMp}`;
+        }
+
+        function updateTargetUI() {
+            const target = gameState.player.target;
+            if (target && !target.isDead) {
+                document.getElementById('target-frame').style.display = 'flex';
+                document.getElementById('target-hp-fill').style.width = (target.hp / target.maxHp * 100) + '%';
+                document.getElementById('target-hp-text').innerText = `${target.hp} / ${target.maxHp}`;
+                targetRing.visible = true;
+                targetRing.position.set(target.mesh.position.x, 0.1, target.mesh.position.z);
+            } else {
+                document.getElementById('target-frame').style.display = 'none';
+                targetRing.visible = false;
+            }
+        }
+
+        function startCooldownUI(slot, duration) {
+            const cdEl = document.getElementById(`cd-${slot}`);
+            cdEl.style.display = 'block';
+            let start = performance.now();
+            function updateCD() {
+                let passed = performance.now() - start;
+                if (passed < duration) {
+                    cdEl.style.height = (100 - (passed / duration) * 100) + '%';
+                    requestAnimationFrame(updateCD);
+                } else {
+                    cdEl.style.display = 'none'; cdEl.style.height = '100%';
+                }
+            }
+            requestAnimationFrame(updateCD);
+        }
+
+        function addChat(msg, className) {
+            const box = document.getElementById('chat-messages');
+            const el = document.createElement('div');
+            el.className = className; el.innerText = msg;
+            box.appendChild(el); box.scrollTop = box.scrollHeight;
+        }
+
+        function showFloatingText(text, pos, isHeal = false, isInfo = false) {
+            const vector = pos.clone(); vector.y += 2; vector.project(camera);
+            const x = (vector.x * .5 + .5) * window.innerWidth;
+            const y = -(vector.y * .5 - .5) * window.innerHeight;
+            const el = document.createElement('div');
+            el.className = 'floating-text' + (isHeal ? ' heal' : (isInfo ? ' info' : ''));
+            el.innerText = text; el.style.left = x + 'px'; el.style.top = y + 'px';
+            document.querySelector('.ui-layer').appendChild(el);
+            setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 1000);
+        }
+
+        function attackPlayer(damage) {
+            gameState.player.hp -= damage; if (gameState.player.hp < 0) gameState.player.hp = 0;
+            updatePlayerUI(); showFloatingText(damage, playerObj.position);
+            addChat(`方塊野豬對你造成 ${damage} 傷害。`, 'msg-combat');
+            if (gameState.player.hp <= 0) {
+                addChat("你死了！(網頁重整以重新開始)", "msg-sys");
+                playerObj.rotation.x = -Math.PI / 2;
+                Object.keys(keys).forEach(k => keys[k] = false);
+            }
+        }
+
+        function levelUp() {
+            gameState.player.level++; gameState.player.maxHp += 20; gameState.player.hp = gameState.player.maxHp;
+            gameState.player.maxMp += 10; gameState.player.mp = gameState.player.maxMp;
+            gameState.player.baseDamage += 5;
+            document.getElementById('player-name').innerText = `方塊步兵 Lv.${gameState.player.level}`;
+            updatePlayerUI(); showFloatingText("LEVEL UP!", playerObj.position, true);
+            playerObj.children[0].material.color.setHex(0x00ff00);
+            setTimeout(() => { playerObj.children[0].material.color.setHex(0xffffff); }, 1000);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- 主迴圈 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            const delta = (now - lastTime) / 1000;
+            lastTime = now;
+
+            if (gameState.player.hp > 0) {
+                const oldPos = playerObj.position.clone();
+                let isMoving = false;
+
+                // 處理轉向 (A, D) - 相機將會跟隨
+                const rotationSpeed = 3.0;
+                if (keys.a) { playerObj.rotation.y += rotationSpeed * delta; isMoving = true; }
+                if (keys.d) { playerObj.rotation.y -= rotationSpeed * delta; isMoving = true; }
+
+                // 處理移動 (W, S, Q, E)
+                moveDirection.set(0, 0, 0);
+                if (keys.w) moveDirection.z -= 1;
+                if (keys.s) moveDirection.z += 1;
+                if (keys.q) moveDirection.x -= 1;
+                if (keys.e) moveDirection.x += 1;
+
+                if (moveDirection.lengthSq() > 0) {
+                    isMoving = true;
+                    moveDirection.normalize();
+                    moveDirection.applyEuler(new THREE.Euler(0, playerObj.rotation.y, 0));
+                    playerObj.position.addScaledVector(moveDirection, gameState.player.speed * delta);
+                    playerObj.position.y = Math.abs(Math.sin(now * 0.01)) * 0.2;
+                } else if (!isJumping) {
+                    playerObj.position.y = 0;
+                }
+
+                // 移動中斷詠唱
+                if (isMoving && gameState.casting.isCasting) {
+                    cancelCast();
+                }
+
+                // 處理跳躍
+                if (keys.space && !isJumping) { isJumping = true; yVelocity = 10; }
+                if (isJumping) {
+                    yVelocity -= 30 * delta; playerObj.position.y += yVelocity * delta;
+                    if (playerObj.position.y <= 0) { playerObj.position.y = 0; isJumping = false; yVelocity = 0; }
+                }
+
+                // 邊界
+                if(playerObj.position.x > 95) playerObj.position.x = 95; if(playerObj.position.x < -95) playerObj.position.x = -95;
+                if(playerObj.position.z > 95) playerObj.position.z = 95; if(playerObj.position.z < -95) playerObj.position.z = -95;
+
+                // --- 智能相機跟隨 ---
+                if (keys.w || keys.a || keys.d) {
+                    // W/A/D 時，平滑調整相機到角色後上方 (第三人稱視角)
+                    const idealOffset = new THREE.Vector3(0, 10, 15);
+                    idealOffset.applyEuler(new THREE.Euler(0, playerObj.rotation.y, 0));
+                    const idealCameraPos = playerObj.position.clone().add(idealOffset);
+                    camera.position.lerp(idealCameraPos, 5 * delta); 
+                } else {
+                    // S/Q/E 或跳躍時，只保持相對位移 (不強制旋轉)
+                    const posDelta = playerObj.position.clone().sub(oldPos);
+                    camera.position.add(posDelta);
+                }
+                controls.target.copy(playerObj.position);
+                
+                // 回魔與詠唱處理
+                if (gameState.player.mp < gameState.player.maxMp) {
+                    gameState.player.mp += 2 * delta;
+                    if(gameState.player.mp > gameState.player.maxMp) gameState.player.mp = gameState.player.maxMp;
+                    if(Math.floor(now) % 60 === 0) updatePlayerUI(); 
+                }
+
+                if (gameState.casting.isCasting) {
+                    gameState.casting.timer += delta * 1000;
+                    document.getElementById('cast-bar-fill').style.width = (gameState.casting.timer / gameState.casting.duration * 100) + '%';
+                    if (gameState.casting.timer >= gameState.casting.duration) finishCast();
+                }
+            }
+
+            controls.update();
+            enemies.forEach(e => e.update(delta));
+            updateLoot();
+            updateMeteors(delta);
+            if(playerPet) playerPet.update(delta);
+            
+            if (gameState.player.target && !gameState.player.target.isDead) {
+                targetRing.position.set(gameState.player.target.mesh.position.x, 0.1, gameState.player.target.mesh.position.z);
+                targetRing.rotation.y += delta;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>

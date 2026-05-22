@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>台北的天空</title>
+    <style></style>
+  </head>
+  <body>
+    <div id="weather-box">⚡ 天氣資料連線中，請稍候...</div>
+    <script>
+      const RALPH_KEY = "CWA-6D8D71DB-4861-49F4-A4F2-47FB1ADF0ECE";
+      const API_URL = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-061?Authorization=${RALPH_KEY}`;
+      async function fetchWeather() {
+        try {
+          const response = await fetch(API_URL);
+          const data = await response.json();
+
+          const districts = data.records.Locations[0].Location;
+          const tempArr = districts.map((item) => {
+            const tempElement = item.WeatherElement.find(
+              (el) => el.ElementName === "溫度",
+            );
+            const currentTime = tempElement.Time[0];
+            const currentTemp = currentTime.ElementValue[0].Temperature;
+            return {
+              district: item.LocationName,
+              updateTime: currentTime,
+              temp: currentTemp,
+            };
+          });
+          console.log(tempArr);
+        } catch (error) {
+          console.error("發生錯誤", error);
+        }
+      }
+      fetchWeather();
+    </script>
+  </body>
+</html>

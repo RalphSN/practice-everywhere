@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>排球聯賽名冊</title>
+    <style>
+      .team-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 15px;
+        width: 500px;
+        border: 2px solid #999;
+        border-radius: 5px;
+        padding: 10px 20px;
+        margin-top: 10px;
+      }
+      .subtitle {
+        text-decoration: underline;
+      }
+
+      .delete-btn {
+        all: unset;
+        cursor: pointer;
+        transition: 0.35s;
+      }
+      .delete-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="add-team-form">
+      <input type="text" id="team-name" placeholder="球隊名稱" />
+      <input type="text" id="leader-name" placeholder="隊長名稱" />
+      <input type="number" id="team-num" placeholder="球隊人數" />
+      <button class="add-btn" id="add-btn">➕新增球隊</button>
+    </div>
+    <div id="team-grid"></div>
+    <script>
+      let teamList = JSON.parse(localStorage.getItem("volleyTeams")) || [
+        {
+          id: Date.now(),
+          teamName: "烏野高中 🐦",
+          captain: "澤村大地",
+          playersCount: 12,
+        },
+      ];
+
+      const teamName = document.querySelector("#team-name");
+      const leaderName = document.querySelector("#leader-name");
+      const teamNum = document.querySelector("#team-num");
+      const addBtn = document.querySelector("#add-btn");
+      const container = document.querySelector("#team-grid");
+
+      addBtn.addEventListener("click", submitCard);
+      container.addEventListener("click", deleteCard);
+
+      function submitCard() {
+        if (teamName.value && leaderName.value && teamNum.value) {
+          if (teamNum.value >= 6) {
+            teamList = [
+              ...teamList,
+              {
+                id: Date.now(),
+                teamName: teamName.value,
+                captain: leaderName.value,
+                playersCount: parseInt(teamNum.value, 10),
+              },
+            ];
+            localStorage.setItem("volleyTeams", JSON.stringify(teamList));
+            renderCard(teamList);
+
+            teamName.value = "";
+            leaderName.value = "";
+            teamNum.value = "";
+            teamName.focus();
+          } else {
+            alert("球隊至少需為6人");
+          }
+        } else {
+          alert("不可有空欄位");
+        }
+      }
+
+      function renderCard(data) {
+        container.innerHTML = "";
+        data.map(({ id, teamName, captain, playersCount }) => {
+          container.innerHTML += `
+                <div class="team-card" >
+                  <h3 class="title">${teamName}</h3>
+                  <p class="subtitle">${captain}</p>
+                  <p class="num">${playersCount}</p>
+                  <button class="delete-btn" data-id="${id}">🗑️</button>
+                </div>
+              `;
+        });
+      }
+
+      function deleteCard(e) {
+        if (e.target.classList.contains("delete-btn")) {
+          const targetId = e.target.dataset.id;
+          const foundItem = teamList.find(({ id }) => String(id) === targetId);
+          if (foundItem) {
+            const card = e.target.closest(".team-card");
+            teamList = teamList.filter(({ id }) => String(id) !== targetId);
+            card.remove();
+            localStorage.setItem("volleyTeams", JSON.stringify(teamList));
+            if (teamList.length == 0) {
+              container.innerHTML = `<p>目前沒有名單</p>`;
+            }
+          }
+
+          // teamList = teamList.filter(({ id }) => String(id) !== targetId);
+          // renderCard(teamList);
+          // localStorage.setItem("volleyTeams", JSON.stringify(teamList));
+        }
+      }
+
+      // 初始化
+      JSON.parse(localStorage.getItem("volleyTeams"));
+      renderCard(teamList);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>宇宙中八大行星繞著太陽旋轉</title>
+    <style>
+      /* 重置並設定深色背景 */
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #020308;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+      }
+
+      /* 容器設定為完美的 500x500 圓形視窗 */
+      #solar-system-container {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        /* 邊緣內陰影增加立體感 */
+        box-shadow:
+          0 0 80px rgba(15, 35, 75, 0.6),
+          inset 0 0 60px rgba(0, 0, 0, 0.9);
+        background: radial-gradient(circle at center, #0a0f1c 0%, #010205 100%);
+        overflow: hidden;
+      }
+
+      /* SVG 填滿容器 */
+      svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 用來放置動態生成 SVG 的容器 -->
+    <div id="solar-system-container"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const container = document.getElementById("solar-system-container");
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        // 1. 初始化 SVG 與定義漸層 / 濾鏡效果
+        let svgStr = `
+        <svg viewBox="0 0 500 500" xmlns="${svgNS}">
+          <defs>
+            <!-- 基礎微發光濾鏡 -->
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            <!-- 太陽強烈光暈濾鏡 -->
+            <filter id="sunGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            <!-- 太陽本體的放射漸層 -->
+            <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="20%" stop-color="#fff0a8"/>
+              <stop offset="50%" stop-color="#ffb700"/>
+              <stop offset="100%" stop-color="#ff4500"/>
+            </radialGradient>
+
+            <!-- 銀河星雲的微弱漸層 -->
+            <radialGradient id="milkyWayGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(30, 70, 160, 0.15)"/>
+              <stop offset="50%" stop-color="rgba(100, 20, 120, 0.08)"/>
+              <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
+            </radialGradient>
+
+            <!-- 流星拖尾漸層 -->
+            <linearGradient id="cometGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <!-- 2. 繪製背景：銀河星雲 -->
+          <ellipse cx="250" cy="250" rx="300" ry="70" fill="url(#milkyWayGrad)" transform="rotate(-25 250 250)" filter="url(#sunGlow)"/>
+          <ellipse cx="250" cy="250" rx="200" ry="50" fill="url(#milkyWayGrad)" transform="rotate(35 250 250)" filter="url(#sunGlow)"/>
+      `;
+
+        // 3. 繪製背景：隨機生成的星星
+        const starCount = 200;
+        for (let i = 0; i < starCount; i++) {
+          const x = Math.random() * 500;
+          const y = Math.random() * 500;
+          const r = Math.random() * 1.2;
+          const opacity = Math.random() * 0.7 + 0.3;
+          const isTwinkle = Math.random() > 0.6; // 40% 的星星會閃爍
+
+          if (isTwinkle) {
+            const dur = Math.random() * 3 + 2; // 閃爍週期 2~5秒
+            const delay = Math.random() * 3;
+            svgStr += `
+            <circle cx="${x}" cy="${y}" r="${r}" fill="#ffffff" opacity="${opacity}">
+              <animate attributeName="opacity" values="${opacity}; 0.1; ${opacity}" dur="${dur}s" begin="-${delay}s" repeatCount="indefinite" />
+            </circle>
+          `;
+          } else {
+            svgStr += `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffffff" opacity="${opacity}" />`;
+          }
+        }
+
+        // 4. 繪製流星 (偶爾劃過畫面)
+        svgStr += `
+        <g>
+          <!-- 流星軌跡動畫，15秒循環一次，利用 keyTimes 控制它只在極短時間內出現 -->
+          <animateTransform attributeName="transform" type="translate" values="-100 -100; 700 700; 700 700" keyTimes="0; 0.2; 1" dur="15s" repeatCount="indefinite"/>
+          <g transform="rotate(45 0 0)">
+             <circle cx="0" cy="0" r="1.2" fill="#ffffff" filter="url(#glow)"/>
+             <line x1="0" y1="0" x2="-35" y2="0" stroke="url(#cometGrad)" stroke-width="1.5"/>
+          </g>
+        </g>
+      `;
+
+        // 八大行星資料設定 (r: 尺寸半徑, d: 軌道距離, speed: 繞行一圈秒數)
+        const planets = [
+          { name: "水星", r: 2.5, d: 38, color: "#A8A8A8", speed: 5 },
+          { name: "金星", r: 4.5, d: 55, color: "#E0C090", speed: 8 },
+          {
+            name: "地球",
+            r: 5.0,
+            d: 78,
+            color: "#4FA4FF",
+            speed: 12,
+            hasMoon: true,
+          },
+          { name: "火星", r: 3.5, d: 100, color: "#E55A39", speed: 18 },
+          {
+            name: "木星",
+            r: 12.0,
+            d: 140,
+            color: "#E09F67",
+            speed: 30,
+            hasSpot: true,
+          },
+          {
+            name: "土星",
+            r: 10.0,
+            d: 180,
+            color: "#F0E3AD",
+            speed: 45,
+            hasRings: true,
+          },
+          { name: "天王星", r: 7.0, d: 215, color: "#4FD0E7", speed: 60 },
+          { name: "海王星", r: 6.5, d: 242, color: "#4B70DD", speed: 80 },
+        ];
+
+        // 5. 繪製行星軌道 (淡淡的虛線圓)
+        planets.forEach((p) => {
+          svgStr += `<circle cx="250" cy="250" r="${p.d}" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="0.8" stroke-dasharray="2 4" />`;
+        });
+
+        // 6. 繪製太陽本體與日冕光暈
+        svgStr += `
+        <!-- 日冕光暈 -->
+        <circle cx="250" cy="250" r="22" fill="rgba(255, 106, 0, 0.3)" filter="url(#sunGlow)"/>
+        <!-- 太陽本體 -->
+        <circle cx="250" cy="250" r="16" fill="url(#sunGrad)" filter="url(#glow)"/>
+      `;
+
+        // 7. 繪製行星與所屬的動畫群組
+        planets.forEach((p) => {
+          const cy = 250 - p.d; // 計算星球在 Y 軸上的初始位置
+          const startAngle = Math.random() * 360; // 賦予隨機初始角度，避免一開始排成一條線
+
+          svgStr += `<g>`;
+          // 公轉動畫：從隨機起始角度繞圓心 (250, 250) 旋轉 360 度
+          svgStr += `<animateTransform attributeName="transform" type="rotate" values="${startAngle} 250 250; ${startAngle + 360} 250 250" dur="${p.speed}s" repeatCount="indefinite"/>`;
+
+          // 行星本體
+          svgStr += `<circle cx="250" cy="${cy}" r="${p.r}" fill="${p.color}" filter="url(#glow)"/>`;
+
+          // 地球：專屬月球動畫
+          if (p.hasMoon) {
+            const moonStart = Math.random() * 360;
+            svgStr += `<g>`;
+            // 月球自轉中心點為地球的坐標 (250, cy)
+            svgStr += `<animateTransform attributeName="transform" type="rotate" values="${moonStart} 250 ${cy}; ${moonStart + 360} 250 ${cy}" dur="2s" repeatCount="indefinite"/>`;
+            svgStr += `<circle cx="250" cy="${cy - p.r - 3}" r="1.2" fill="#ffffff" />`;
+            svgStr += `</g>`;
+          }
+
+          // 木星：大紅斑特徵
+          if (p.hasSpot) {
+            svgStr += `<ellipse cx="250" cy="${cy + 2.5}" rx="3" ry="1.5" fill="#a85232" opacity="0.6"/>`;
+          }
+
+          // 土星：環特徵
+          if (p.hasRings) {
+            svgStr += `<ellipse cx="250" cy="${cy}" rx="${p.r + 7}" ry="${p.r - 6}" fill="none" stroke="${p.color}" stroke-width="2" opacity="0.8" transform="rotate(20 250 ${cy})"/>`;
+          }
+
+          svgStr += `</g>`;
+        });
+
+        // 8. 加上科幻感的文字標籤
+        svgStr += `
+          <text x="250" y="480" fill="rgba(255, 255, 255, 0.3)" font-family="sans-serif" font-size="10" font-weight="300" letter-spacing="6" text-anchor="middle">SOLAR SYSTEM</text>
+        </svg>
+      `;
+
+        // 將生成的 SVG 塞入容器
+        container.innerHTML = svgStr;
+      });
+    </script>
+  </body>
+</html>

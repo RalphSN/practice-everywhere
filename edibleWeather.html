@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>天氣觀測站</title>
+    <style>
+      .dashboard {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .weather-card {
+        border: 2px solid #333;
+        padding: 15px;
+        border-radius: 10px;
+        width: 180px;
+        text-align: center;
+        position: relative;
+      }
+      .temp {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff5722;
+      }
+      .loading {
+        color: #666;
+        font-style: italic;
+      }
+      .delete-btn {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🌍 我的天氣監測清單</h2>
+    <button id="update-btn">同步最新天氣 🔄</button>
+
+    <div class="input-group">
+      <input type="text" id="new-city-name" placeholder="城市名稱" />
+      <input type="number" id="new-city-lat" placeholder="緯度 (Lat)" />
+      <input type="number" id="new-city-lon" placeholder="經度 (Lon)" />
+      <button id="add-btn">➕ 新增城市</button>
+    </div>
+
+    <div id="weather-dashboard" class="dashboard"></div>
+
+    <script>
+      let myCities = JSON.parse(localStorage.getItem("currentCities")) || [
+        { name: "台北", lat: 25.03, lon: 121.56 },
+        { name: "桃園", lat: 24.99, lon: 121.3 },
+        { name: "沖繩", lat: 26.21, lon: 127.68 },
+      ];
+
+      let container = document.querySelector("#weather-dashboard");
+      let updateBtn = document.querySelector("#update-btn");
+
+      let inputName = document.querySelector("#new-city-name");
+      let inputLat = document.querySelector("#new-city-lat");
+      let inputLon = document.querySelector("#new-city-lon");
+      let addBtn = document.querySelector("#add-btn");
+      addBtn.addEventListener("click", addCity);
+      updateBtn.addEventListener("click", updateWeather);
+      container.addEventListener("click", deleteCity);
+
+      function renderCard(data, index) {
+        const { cityName, current_weather } = data;
+        const temp = current_weather.temperature;
+        const wind = current_weather.windspeed;
+        container.innerHTML += `
+        <div class="weather-card">
+            <h3>${cityName}</h3>
+            <p class="temp">${temp}</p>
+            <p>${wind}</p>
+            <button class="delete-btn" data-index="${index}">X</button>
+        </div>
+        `;
+      }
+
+      async function updateWeather() {
+        container.innerHTML = `<p>天氣資訊載入中...</p>`;
+        const cities = myCities.map(({ lat, lon }) => {
+          return fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`,
+          );
+        });
+        const response = await Promise.all(cities);
+        const data = await Promise.all(response.map((res) => res.json()));
+        const processedData = data.map((item, index) => {
+          return {
+            cityName: myCities[index].name,
+            ...item,
+          };
+        });
+        container.innerHTML = ``;
+        processedData.forEach((item, index) => renderCard(item, index));
+
+        localStorage.setItem("weather", JSON.stringify(processedData));
+      }
+
+      function addCity() {
+        // 改變原陣列的寫法
+        // myCities.push({
+        //   name: inputName.value,
+        //   lat: inputLat.value,
+        //   lon: inputLon.value,
+        // });
+        // 不改變原陣列的寫法
+        myCities = [
+          ...myCities,
+          { name: inputName.value, lat: inputLat.value, lon: inputLon.value },
+        ];
+        updateWeather();
+        localStorage.setItem("currentCities", JSON.stringify(myCities));
+      }
+
+      function deleteCity(e) {
+        if (e.target.classList.contains("delete-btn")) {
+          const targetIndex = parseInt(e.target.dataset.index);
+          myCities = myCities.filter((item, index) => index !== targetIndex);
+          updateWeather();
+          localStorage.setItem("currentCities", JSON.stringify(myCities));
+        }
+      }
+
+      const freezedData = localStorage.getItem("weather");
+      if (freezedData) {
+        JSON.parse(freezedData).forEach((data, index) =>
+          renderCard(data, index),
+        );
+      }
+    </script>
+  </body>
+</html>

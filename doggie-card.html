@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>汪汪幸運圖鑑</title>
+    <style>
+      .dog-img {
+        width: 300px;
+        height: auto;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .collection {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .collection img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+      }
+      .current-dog img {
+        width: 500px;
+        height: auto;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="fetch-btn">抽一隻狗狗</button>
+    <button id="save-btn">收藏這隻狗狗</button>
+
+    <h3>今日幸運汪汪</h3>
+    <div id="current-dog" class="current-dog"></div>
+
+    <h3>我的汪汪收藏</h3>
+    <div id="collection-container" class="collection"></div>
+
+    <script>
+      const fetchBtn = document.querySelector("#fetch-btn");
+      const saveBtn = document.querySelector("#save-btn");
+      const currentDog = document.querySelector("#current-dog");
+      const collection = document.querySelector("#collection-container");
+      let collections = [];
+      let response;
+      let data;
+      fetchBtn.addEventListener("click", draw);
+      saveBtn.addEventListener("click", saveDog);
+
+      async function draw() {
+        response = await fetch("https://dog.ceo/api/breeds/image/random");
+        data = await response.json();
+        console.log("抽取資料:", data);
+        currentDog.innerHTML = `
+        <img src="${data.message}" alt="隨機汪汪圖片" />
+        `;
+      }
+
+      function saveDog() {
+        if (collections.includes(data.message)) {
+          return;
+        } else {
+          collections.push(data.message);
+          let collectionsStr = JSON.stringify(collections);
+          localStorage.setItem("dogCollections", collectionsStr);
+          // 避免畫面閃動 手動把圖片插入
+          collection.innerHTML += `
+         <img src="${data.message}" alt="隨機汪汪圖片" />
+          `;
+        }
+      }
+
+      const savedString = localStorage.getItem("dogCollections");
+      if (savedString) {
+        const dataArr = JSON.parse(savedString);
+        collections = dataArr;
+
+        dataArr.forEach((url) => {
+          collection.innerHTML += `
+             <img src="${url}" alt="隨機汪汪圖片" />
+        `;
+        });
+      }
+    </script>
+  </body>
+</html>

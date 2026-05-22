@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>天氣觀測站</title>
+    <style>
+      .dashboard {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .weather-card {
+        border: 2px solid #333;
+        padding: 15px;
+        border-radius: 10px;
+        width: 180px;
+        text-align: center;
+      }
+      .temp {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff5722;
+      }
+      .loading {
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🌍 我的天氣監測清單</h2>
+    <button id="update-btn">同步最新天氣 🔄</button>
+
+    <div id="weather-dashboard" class="dashboard"></div>
+
+    <script>
+      // 1. 初始化監測清單（在大廳宣告）
+      // 這裡我幫你準備了三個地點的座標：
+      const myCities = [
+        { name: "台北", lat: 25.03, lon: 121.56 },
+        { name: "桃園", lat: 24.99, lon: 121.3 },
+        { name: "沖繩", lat: 26.21, lon: 127.68 },
+      ];
+
+      const updateBtn = document.querySelector("#update-btn");
+      const dashboard = document.querySelector("#weather-dashboard");
+      updateBtn.addEventListener("click", updateAllWeather);
+
+      function renderWeather(data) {
+        const { cityName, current_weather } = data;
+        const temperature = current_weather.temperature;
+        const windspeed = current_weather.windspeed;
+        dashboard.innerHTML += `
+        <div class="weather-card">
+            <h3>${cityName}</h3>
+            <p class="temp">${temperature}</p>
+            <p>${windspeed}</p>
+        </div>
+        `;
+      }
+
+      function initDashboard(dataArr) {
+        dashboard.innerHTML = "";
+        dataArr.forEach((data) => {
+          renderWeather(data);
+        });
+      }
+
+      async function updateAllWeather() {
+        dashboard.innerHTML = '<p class="loading">正在抓取最新氣象資料...</p>';
+        const cities = myCities.map(({ lat, lon }) => {
+          return fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`,
+          );
+        });
+
+        const response = await Promise.all(cities).catch();
+        const data = await Promise.all(response.map((res) => res.json()));
+        const processedData = data.map((item, index) => {
+          return {
+            cityName: myCities[index].name,
+            ...item,
+          };
+        });
+        initDashboard(processedData);
+        const weatherString = JSON.stringify(processedData);
+        localStorage.setItem("currentWeather", weatherString);
+      }
+
+      const weatherString = localStorage.getItem("currentWeather");
+      if (weatherString) {
+        const data = JSON.parse(weatherString);
+        initDashboard(data);
+      }
+    </script>
+  </body>
+</html>

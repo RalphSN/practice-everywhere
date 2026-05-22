@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo-list</title>
+    <style>
+      .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100vh;
+        gap: 10px;
+      }
+
+      .todo-group,
+      .done-group {
+        display: block;
+        width: 50%;
+        height: 500px;
+        border: 3px solid #000;
+        border-radius: 10px;
+        padding: 5px;
+      }
+
+      .task-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 2px solid #555555;
+        border-radius: 10px;
+        padding: 5px 10px;
+        margin-bottom: 5px;
+      }
+
+      .toggle-btn {
+        all: unset;
+        height: 30px;
+        border: 1px solid #3b3b3b;
+        border-radius: 10px;
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .toggle-btn:hover {
+        background-color: #535353;
+        color: #fafafa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="container">
+      <div id="todo-group" class="todo-group"></div>
+      <div id="done-group" class="done-group"></div>
+    </div>
+    <script>
+      let myTasks = JSON.parse(localStorage.getItem("list")) || [
+        { id: 1, title: "練球一小時 🏐", status: "todo" },
+        { id: 2, title: "研究 Three.js 光影 💻", status: "todo" },
+        { id: 3, title: "拉筋與核心訓練 🏃", status: "done" },
+      ];
+
+      const todoGroup = document.querySelector("#todo-group");
+      const doneGroup = document.querySelector("#done-group");
+      const container = document.querySelector("#container");
+      container.addEventListener("click", toggleTask);
+
+      function renderTasks(tasks) {
+        todoGroup.innerHTML = ``;
+        doneGroup.innerHTML = ``;
+        tasks.map(({ id, title, status }) => {
+          (status === "todo" ? todoGroup : doneGroup).innerHTML += `
+        <div class="task-card">
+          <h3 class="title">${title}</h3>
+          <button class="toggle-btn" data-id="${id}">${status === "todo" ? "完成👉" : "👈待辦"}</button>
+        </div>
+          `;
+        });
+        localStorage.setItem("list", JSON.stringify(myTasks));
+      }
+
+      function toggleTask(e) {
+        if (e.target.classList.contains("toggle-btn")) {
+          const targetId = parseInt(e.target.dataset.id, 10);
+          const foundtask = myTasks.find(({ id }) => id === targetId);
+          if (foundtask) {
+            // 透過class選擇器抓到指定元素
+            const card = e.target.closest(".task-card");
+            // 判斷誰是新家
+            const targetGroup =
+              foundtask.status === "todo" ? doneGroup : todoGroup;
+            // 因為不是重繪，按鈕文字也要手動修改
+            e.target.innerHTML =
+              foundtask.status === "todo" ? "👈待辦" : "完成👉";
+            // 修改資料狀態
+            foundtask.status = foundtask.status === "todo" ? "done" : "todo";
+            // 空投元素
+            targetGroup.appendChild(card);
+            // 同步冰箱
+            localStorage.setItem("list", JSON.stringify(myTasks));
+
+            // renderTasks(myTasks);
+          }
+        }
+      }
+
+      //   const currentTask = JSON.parse(localStorage.getItem("list")) || myTasks;
+      //   renderTasks(currentTask);
+      renderTasks(myTasks);
+    </script>
+  </body>
+</html>

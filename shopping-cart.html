@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>購物車</title>
+    <style>
+      .cart-table {
+        display: flex;
+        flex-direction: column;
+        border: 2px solid #999;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 2px solid #999;
+        padding: 5px 10px;
+        margin-bottom: 5px;
+      }
+      .change {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .btn {
+        all: unset;
+        cursor: pointer;
+        transition: 0.3s ease;
+      }
+
+      .btn:active {
+        transform: scale(0.8);
+      }
+
+      .total {
+        display: flex;
+        justify-content: flex-end;
+        border: 2px solid #999;
+        height: 50px;
+        font-size: 36px;
+        padding: 5px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cart-table" class="cart-table"></div>
+    <div id="total-price-display" class="total"></div>
+    <script>
+      let cartList = JSON.parse(localStorage.getItem("myCart")) || [
+        { id: 101, name: "專業級排球 🏐", price: 1200, count: 1 },
+        { id: 102, name: "Sony 鏡頭清潔組 📷", price: 350, count: 2 },
+        { id: 103, name: "高濃度魚油 🐟", price: 800, count: 1 },
+      ];
+
+      const cart = document.querySelector("#cart-table");
+      const total = document.querySelector("#total-price-display");
+      cart.addEventListener("click", changeCount);
+
+      function renderCart(data) {
+        cart.innerHTML = "";
+        cartList.map(({ id, name, price, count }) => {
+          cart.innerHTML += `
+               <div class="item">
+                   <h4 class="title">${name}</h4>
+                   <span class="price">NT$${price}/單品項</span>
+                   <span class="count">${count}(個)</span>
+                   <div class="change">
+                       <button class="plus btn" data-id="${id}" data-action="plus">
+                       ➕
+                        </button>
+                       <button class="minus btn" data-id="${id}" data-action="minus">
+                       ➖
+                       </button>
+                   </div>
+                  </div>
+                `;
+        });
+      }
+
+      function calculatePrice() {
+        const totalPrice = cartList.reduce(
+          (acc, { price, count }) => acc + price * count,
+          0,
+        );
+        total.innerHTML = `${totalPrice}元`;
+      }
+
+      function deleteItem(id, itemElement) {
+        const confirmDelete = confirm("確定刪除該項目?");
+        if (confirmDelete) {
+          cartList = cartList.filter((mer) => mer.id !== id);
+          calculatePrice();
+          itemElement.remove();
+          localStorage.setItem("myCart", JSON.stringify(cartList));
+
+          if (cartList.length === 0) {
+            cart.innerHTML = `<p>目前購物車內沒有商品</p>`;
+          }
+        }
+      }
+
+      function changeCount(e) {
+        const action = e.target.dataset.action;
+        if (action === "plus" || action === "minus") {
+          // const plus = e.target.classList.contains("plus");
+          // const minus = e.target.classList.contains("minus");
+          const cartItem = e.target.closest(".item");
+          const count = cartItem.querySelector(".count");
+          const targetId = parseInt(e.target.dataset.id, 10);
+          const foundItem = cartList.find(({ id }) => id === targetId);
+
+          if (action === "plus") {
+            foundItem.count++;
+            count.innerText = `${foundItem.count}(個)`;
+            calculatePrice();
+            localStorage.setItem("myCart", JSON.stringify(cartList));
+          } else {
+            if (foundItem.count > 1) {
+              foundItem.count--;
+              count.innerText = `${foundItem.count}(個)`;
+              calculatePrice();
+              localStorage.setItem("myCart", JSON.stringify(cartList));
+            } else {
+              deleteItem(targetId, cartItem);
+            }
+          }
+        }
+      }
+
+      renderCart(cartList);
+      calculatePrice();
+    </script>
+  </body>
+</html>

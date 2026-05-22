@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="zh-TW" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS | 未來資源導航</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- FontAwesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              background: "#030305" /* Even darker, almost pure black */,
+              surface: "#0F0F11",
+              primary: "#E0E0E0",
+              secondary: "#A0A0A0",
+              accent: "#3B82F6" /* More professional blue than neon cyan */,
+              "accent-glow": "rgba(59, 130, 246, 0.5)",
+            },
+            fontFamily: {
+              sans: ['"Inter"', '"Noto Sans TC"', "sans-serif"],
+              mono: ['"JetBrains Mono"', "monospace"],
+            },
+            animation: {
+              "fade-in": "fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            },
+            keyframes: {
+              fadeIn: {
+                "0%": { opacity: 0, transform: "translateY(10px)" },
+                "100%": { opacity: 1, transform: "translateY(0)" },
+              },
+            },
+            boxShadow: {
+              glow: "0 0 20px -5px rgba(59, 130, 246, 0.15)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background-color: #030305;
+        color: #e0e0e0;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Subtle Grid Background */
+      .bg-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          );
+        background-size: 60px 60px;
+        z-index: -2;
+        mask-image: radial-gradient(
+          circle at center,
+          black 40%,
+          transparent 100%
+        );
+      }
+
+      /* Minimal Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 99px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      /* Premium Card Style */
+      .premium-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .premium-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Gradient sheen effect on hover */
+      .premium-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(
+          120deg,
+          transparent 30%,
+          rgba(255, 255, 255, 0.03) 50%,
+          transparent 70%
+        );
+        transform: translateX(-100%);
+        transition: transform 0.6s;
+      }
+      .premium-card:hover::after {
+        transform: translateX(100%);
+      }
+
+      /* Minimal Input */
+      .search-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 99px;
+        transition: all 0.3s ease;
+      }
+      .search-container:focus-within {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+      }
+      .search-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: white;
+      }
+
+      /* Filter Tabs */
+      .tab-btn {
+        position: relative;
+        color: #888;
+        transition: color 0.3s ease;
+      }
+      .tab-btn:hover {
+        color: #ccc;
+      }
+      .tab-btn.active {
+        color: white;
+        font-weight: 500;
+      }
+
+      /* Active Indicator */
+      .tab-indicator {
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .tab-btn.active .tab-indicator {
+        opacity: 1;
+      }
+
+      /* Loader */
+      .loader {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Lightbox */
+      .backdrop-blur-md {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen font-sans">
+    <!-- Background Grid -->
+    <div class="bg-grid"></div>
+
+    <!-- Ambient Light Orbs (Subtle) -->
+    <div
+      class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none z-[-1]"
+    ></div>
+    <div
+      class="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none z-[-1]"
+    ></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full z-50 bg-[#030305]/80 backdrop-blur-xl border-b border-white/5"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between"
+      >
+        <div
+          class="flex items-center gap-3 cursor-pointer group"
+          onclick="resetFilters()"
+        >
+          <div
+            class="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center font-bold font-mono text-xs shadow-glow"
+          >
+            NX
+          </div>
+          <span class="font-sans text-sm font-semibold text-white tracking-wide"
+            >Nexus Hub</span
+          >
+        </div>
+        <div class="flex items-center gap-6">
+          <a
+            href="#"
+            class="text-xs text-gray-400 hover:text-white transition-colors"
+            >Submit</a
+          >
+          <a
+            href="#"
+            class="text-xs text-gray-400 hover:text-white transition-colors"
+            >About</a
+          >
+          <div class="h-4 w-[1px] bg-white/10"></div>
+          <span class="text-[10px] font-mono text-gray-500">V5.1</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-32 pb-24 px-6 max-w-6xl mx-auto w-full">
+      <!-- Hero Section -->
+      <div class="mb-24 text-center max-w-2xl mx-auto">
+        <h1
+          class="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight leading-tight"
+        >
+          Curated tools for <br />
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+            >Digital Creators.</span
+          >
+        </h1>
+        <p class="text-secondary text-base mb-10 font-light">
+          Discover the best resources for Design, Development, and AI.
+          <br class="hidden md:block" />Updated daily. Hand-picked quality.
+        </p>
+
+        <!-- Elegant Search -->
+        <div
+          class="search-container flex items-center px-4 py-3 max-w-md mx-auto"
+        >
+          <i
+            class="fa-solid fa-magnifying-glass text-gray-500 text-sm ml-2"
+          ></i>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input w-full ml-3 text-sm placeholder-gray-600 font-medium"
+            placeholder="Search for tools (e.g., Figma, React)..."
+            autocomplete="off"
+          />
+          <div
+            class="hidden md:block text-[10px] font-mono text-gray-600 border border-gray-800 rounded px-1.5 py-0.5"
+          >
+            ⌘K
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Filter Bar -->
+      <div
+        class="sticky top-20 z-40 bg-[#030305]/90 backdrop-blur-xl py-4 mb-8 -mx-6 px-6 border-b border-white/5 md:border-none md:bg-transparent md:backdrop-blur-none md:static md:p-0 md:mb-12"
+      >
+        <div class="flex flex-col items-center gap-6">
+          <!-- Main Filters -->
+          <div
+            class="flex flex-wrap justify-center gap-8 text-sm font-medium tracking-wide"
+            id="filterContainer"
+          >
+            <button class="tab-btn active" data-category="all">
+              Overview <span class="tab-indicator"></span>
+            </button>
+            <button class="tab-btn" data-category="design">
+              Design <span class="tab-indicator"></span>
+            </button>
+            <button class="tab-btn" data-category="dev">
+              Development <span class="tab-indicator"></span>
+            </button>
+            <button class="tab-btn" data-category="ai">
+              Intelligence <span class="tab-indicator"></span>
+            </button>
+            <button class="tab-btn" data-category="examples">
+              Showcase <span class="tab-indicator"></span>
+            </button>
+          </div>
+
+          <!-- Sub Filters -->
+          <div
+            id="subFilterContainer"
+            class="flex flex-wrap justify-center gap-2 transition-all duration-300 opacity-0 h-0 overflow-hidden"
+          >
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="initialLoading" class="hidden flex justify-center py-20">
+        <div class="loader"></div>
+      </div>
+
+      <!-- Grid Container -->
+      <div
+        id="resourceGrid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+      >
+        <!-- Cards injected via JS -->
+      </div>
+
+      <!-- Sentinel -->
+      <div
+        id="scrollSentinel"
+        class="h-24 flex justify-center items-center mt-12"
+      >
+        <div id="scrollLoader" class="loader hidden"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="noResults" class="hidden text-center py-32">
+        <p class="text-gray-600 font-medium">
+          No resources found matching your criteria.
+        </p>
+        <button
+          onclick="resetFilters()"
+          class="mt-4 text-sm text-blue-400 hover:underline"
+        >
+          Clear filters
+        </button>
+      </div>
+
+      <div id="endOfList" class="hidden text-center py-12">
+        <div class="w-1 h-1 bg-gray-700 rounded-full mx-auto"></div>
+      </div>
+    </main>
+
+    <!-- Modal -->
+    <div
+      id="lightbox"
+      class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4"
+      aria-modal="true"
+    >
+      <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 opacity-0"
+        id="lightboxBackdrop"
+        onclick="closeModal()"
+      ></div>
+
+      <div
+        class="relative bg-[#0F0F11] border border-white/10 rounded-3xl w-full max-w-xl shadow-2xl transform scale-95 opacity-0 transition-all duration-300 p-1"
+        id="lightboxContent"
+      >
+        <!-- Inner Content -->
+        <div class="bg-[#0F0F11] rounded-[20px] overflow-hidden relative">
+          <!-- Close -->
+          <button
+            onclick="closeModal()"
+            class="absolute top-5 right-5 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <i class="fa-solid fa-times text-sm"></i>
+          </button>
+
+          <!-- Header Image/Icon Area -->
+          <div
+            class="h-32 bg-gradient-to-b from-white/5 to-transparent relative flex items-end px-8 pb-6"
+          >
+            <div
+              id="modalIconContainer"
+              class="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shadow-xl absolute -bottom-10 bg-[#1A1A1D] border border-white/10"
+            >
+              <i id="modalIcon" class=""></i>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="pt-14 px-8 pb-8">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h2
+                  id="modalTitle"
+                  class="text-2xl font-bold text-white tracking-tight"
+                ></h2>
+                <div class="flex items-center gap-3 mt-2 text-sm">
+                  <span
+                    id="modalCategory"
+                    class="text-gray-400 font-medium"
+                  ></span>
+                  <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                  <span id="modalSubcategory" class="text-gray-500"></span>
+                </div>
+              </div>
+              <div
+                id="modalRating"
+                class="flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full border border-white/5"
+              >
+                <!-- JS injected -->
+              </div>
+            </div>
+
+            <p
+              id="modalDesc"
+              class="text-gray-300 text-base leading-relaxed mb-8 font-light"
+            ></p>
+
+            <a
+              id="modalLink"
+              href="#"
+              target="_blank"
+              class="flex items-center justify-center gap-2 w-full py-3.5 bg-white text-black hover:bg-gray-200 font-semibold rounded-xl transition-colors duration-200"
+            >
+              Visit Website
+              <i
+                class="fa-solid fa-arrow-up-right-from-square text-xs ml-1"
+              ></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/5 bg-[#030305]">
+      <div
+        class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
+        <p class="text-gray-600 text-xs">
+          © 2026 Nexus Hub. All rights reserved.
+        </p>
+        <div class="flex gap-6 text-gray-600 text-sm">
+          <a href="#" class="hover:text-white transition-colors">Twitter</a>
+          <a href="#" class="hover:text-white transition-colors">GitHub</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // --- DATA & CONFIG ---
+      const SUB_CATEGORIES = {
+        design: [
+          { id: "all", name: "All" },
+          { id: "tools", name: "Tools" },
+          { id: "inspiration", name: "Inspiration" },
+          { id: "assets", name: "Assets" },
+        ],
+        dev: [
+          { id: "all", name: "All" },
+          { id: "frontend", name: "Frontend" },
+          { id: "backend", name: "Backend" },
+          { id: "tools", name: "Tools" },
+        ],
+        ai: [
+          { id: "all", name: "All" },
+          { id: "chat", name: "Chat" },
+          { id: "visual", name: "Visual" },
+          { id: "code", name: "Code" },
+        ],
+        examples: [
+          { id: "all", name: "All" },
+          { id: "saas", name: "SaaS" },
+          { id: "portfolio", name: "Portfolio" },
+          { id: "awards", name: "Awards" },
+        ],
+      };
+
+      const PAGE_SIZE = 12;
+
+      // --- MOCK DATABASE (Reused from previous, ensuring rich data) ---
+      const MOCK_DATABASE = {
+        status: "success",
+        version: "2.2.0",
+        data: [
+          {
+            id: "a3",
+            name: "Gemini",
+            category: "ai",
+            subcategory: "chat",
+            desc: "Google 最新的多模態 AI 模型，處理速度極快，整合度高。",
+            icon: "fa-solid fa-brain",
+            link: "https://gemini.google.com",
+            color: "text-blue-400",
+            bgColor: "bg-blue-400/10",
+            rating: 99,
+          },
+          {
+            id: "a1",
+            name: "ChatGPT",
+            category: "ai",
+            subcategory: "chat",
+            desc: "OpenAI 開發的最強大對話式 AI 模型，引領 AI 革命。",
+            icon: "fa-solid fa-robot",
+            link: "https://chat.openai.com",
+            color: "text-emerald-400",
+            bgColor: "bg-emerald-400/10",
+            rating: 98,
+          },
+          {
+            id: "v10",
+            name: "VS Code",
+            category: "dev",
+            subcategory: "tools",
+            desc: "微軟開發的強大開源程式碼編輯器，擴充性極佳。",
+            icon: "fa-solid fa-code",
+            link: "https://code.visualstudio.com",
+            color: "text-blue-500",
+            bgColor: "bg-blue-500/10",
+            rating: 98,
+          },
+          {
+            id: "d1",
+            name: "Figma",
+            category: "design",
+            subcategory: "tools",
+            desc: "業界標準的雲端協作介面設計工具，設計師必備。",
+            icon: "fa-brands fa-figma",
+            link: "https://www.figma.com",
+            color: "text-rose-400",
+            bgColor: "bg-rose-400/10",
+            rating: 97,
+          },
+          {
+            id: "a2",
+            name: "Claude",
+            category: "ai",
+            subcategory: "chat",
+            desc: "Anthropic 開發的 AI 助手，擅長長文分析與自然寫作。",
+            icon: "fa-solid fa-message",
+            link: "https://claude.ai",
+            color: "text-orange-300",
+            bgColor: "bg-orange-300/10",
+            rating: 97,
+          },
+          {
+            id: "v9",
+            name: "GitHub",
+            category: "dev",
+            subcategory: "tools",
+            desc: "全球最大的程式碼託管與協作平台。",
+            icon: "fa-brands fa-github",
+            link: "https://github.com",
+            color: "text-gray-100",
+            bgColor: "bg-gray-100/10",
+            rating: 96,
+          },
+          {
+            id: "v5",
+            name: "Tailwind CSS",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "以實用性為主 (Utility-first) 的現代化 CSS 框架。",
+            icon: "fa-solid fa-wind",
+            link: "https://tailwindcss.com",
+            color: "text-cyan-400",
+            bgColor: "bg-cyan-400/10",
+            rating: 96,
+          },
+          {
+            id: "v1",
+            name: "React",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "最流行的構建使用者介面 JavaScript 函式庫。",
+            icon: "fa-brands fa-react",
+            link: "https://react.dev",
+            color: "text-sky-400",
+            bgColor: "bg-sky-400/10",
+            rating: 95,
+          },
+          {
+            id: "a5",
+            name: "GitHub Copilot",
+            category: "ai",
+            subcategory: "code",
+            desc: "你的 AI 結對程式設計師，大幅加速開發效率。",
+            icon: "fa-brands fa-github-alt",
+            link: "https://github.com/features/copilot",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 95,
+          },
+          {
+            id: "a4",
+            name: "Midjourney",
+            category: "ai",
+            subcategory: "visual",
+            desc: "效果最驚人、藝術感最強的 AI 圖像生成工具。",
+            icon: "fa-solid fa-palette",
+            link: "https://www.midjourney.com",
+            color: "text-indigo-400",
+            bgColor: "bg-indigo-400/10",
+            rating: 95,
+          },
+          {
+            id: "a6",
+            name: "Perplexity",
+            category: "ai",
+            subcategory: "chat",
+            desc: "AI 驅動的搜尋引擎，提供精準答案與引用來源。",
+            icon: "fa-solid fa-magnifying-glass",
+            link: "https://www.perplexity.ai",
+            color: "text-teal-400",
+            bgColor: "bg-teal-400/10",
+            rating: 94,
+          },
+          {
+            id: "v4",
+            name: "Next.js",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "基於 React 的全端框架，支援 SSR 與 SSG，生產級首選。",
+            icon: "fa-solid fa-n",
+            link: "https://nextjs.org",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 94,
+          },
+          {
+            id: "v8",
+            name: "Vercel",
+            category: "dev",
+            subcategory: "tools",
+            desc: "前端部署與託管的最佳平台，開發體驗極佳。",
+            icon: "fa-solid fa-triangle-exclamation",
+            link: "https://vercel.com",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 94,
+          },
+          {
+            id: "a11",
+            name: "Cursor",
+            category: "ai",
+            subcategory: "code",
+            desc: "深度整合 AI 的現代化程式碼編輯器，開發新體驗。",
+            icon: "fa-solid fa-terminal",
+            link: "https://cursor.sh",
+            color: "text-blue-400",
+            bgColor: "bg-blue-400/10",
+            rating: 93,
+          },
+          {
+            id: "d20",
+            name: "Untitled UI",
+            category: "design",
+            subcategory: "assets",
+            desc: "Figma 上最完整的 UI 設計系統套件。",
+            icon: "fa-solid fa-u",
+            link: "https://www.untitledui.com",
+            color: "text-blue-300",
+            bgColor: "bg-blue-300/10",
+            rating: 93,
+          },
+          {
+            id: "d11",
+            name: "Google Fonts",
+            category: "design",
+            subcategory: "assets",
+            desc: "最常用的免費開源字體庫，支援多國語言。",
+            icon: "fa-solid fa-font",
+            link: "https://fonts.google.com",
+            color: "text-red-400",
+            bgColor: "bg-red-400/10",
+            rating: 92,
+          },
+          {
+            id: "d10",
+            name: "FontAwesome",
+            category: "design",
+            subcategory: "assets",
+            desc: "網路上最流行的圖示標準，資源豐富。",
+            icon: "fa-solid fa-font-awesome",
+            link: "https://fontawesome.com",
+            color: "text-blue-500",
+            bgColor: "bg-blue-500/10",
+            rating: 92,
+          },
+          {
+            id: "v6",
+            name: "Node.js",
+            category: "dev",
+            subcategory: "backend",
+            desc: "基於 Chrome V8 引擎的 JavaScript 執行環境。",
+            icon: "fa-brands fa-node",
+            link: "https://nodejs.org",
+            color: "text-green-600",
+            bgColor: "bg-green-600/10",
+            rating: 92,
+          },
+          {
+            id: "v11",
+            name: "TypeScript",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "JavaScript 的超集，增加了型別系統，大型專案必備。",
+            icon: "fa-solid fa-t",
+            link: "https://www.typescriptlang.org",
+            color: "text-blue-600",
+            bgColor: "bg-blue-600/10",
+            rating: 91,
+          },
+          {
+            id: "a10",
+            name: "V0.dev",
+            category: "ai",
+            subcategory: "code",
+            desc: "由 Vercel 推出的 AI UI 生成工具，快速產出 React 代碼。",
+            icon: "fa-solid fa-code",
+            link: "https://v0.dev",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 91,
+          },
+          {
+            id: "d2",
+            name: "Dribbble",
+            category: "design",
+            subcategory: "inspiration",
+            desc: "全球設計師展示作品與尋找靈感的社群。",
+            icon: "fa-brands fa-dribbble",
+            link: "https://dribbble.com",
+            color: "text-pink-500",
+            bgColor: "bg-pink-500/10",
+            rating: 90,
+          },
+          {
+            id: "e1",
+            name: "Linear",
+            category: "examples",
+            subcategory: "saas",
+            desc: "SaaS 產品設計與互動體驗的黃金標準。",
+            icon: "fa-solid fa-layer-group",
+            link: "https://linear.app",
+            color: "text-purple-300",
+            bgColor: "bg-purple-300/10",
+            rating: 89,
+          },
+          {
+            id: "v25",
+            name: "Postman",
+            category: "dev",
+            subcategory: "tools",
+            desc: "API 開發、測試與文件化的必備協作平台。",
+            icon: "fa-solid fa-paper-plane",
+            link: "https://www.postman.com",
+            color: "text-orange-500",
+            bgColor: "bg-orange-500/10",
+            rating: 89,
+          },
+          {
+            id: "d19",
+            name: "Lucide",
+            category: "design",
+            subcategory: "assets",
+            desc: "美觀且一致的開源圖示庫，Feather Icons 的繼承者。",
+            icon: "fa-solid fa-feather",
+            link: "https://lucide.dev",
+            color: "text-orange-300",
+            bgColor: "bg-orange-300/10",
+            rating: 88,
+          },
+          {
+            id: "v2",
+            name: "Vue.js",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "漸進式 JavaScript 框架，易學易用，社群活躍。",
+            icon: "fa-brands fa-vuejs",
+            link: "https://vuejs.org",
+            color: "text-emerald-500",
+            bgColor: "bg-emerald-500/10",
+            rating: 88,
+          },
+          {
+            id: "d4",
+            name: "Spline",
+            category: "design",
+            subcategory: "tools",
+            desc: "簡單易用的網頁 3D 設計與建模工具。",
+            icon: "fa-solid fa-cube",
+            link: "https://spline.design",
+            color: "text-purple-400",
+            bgColor: "bg-purple-400/10",
+            rating: 87,
+          },
+          {
+            id: "v7",
+            name: "Supabase",
+            category: "dev",
+            subcategory: "backend",
+            desc: "Firebase 的開源替代品，功能強大的後端服務。",
+            icon: "fa-solid fa-bolt",
+            link: "https://supabase.com",
+            color: "text-emerald-400",
+            bgColor: "bg-emerald-400/10",
+            rating: 87,
+          },
+          {
+            id: "v13",
+            name: "Docker",
+            category: "dev",
+            subcategory: "backend",
+            desc: "應用程式容器化平台，簡化部署與環境配置。",
+            icon: "fa-brands fa-docker",
+            link: "https://www.docker.com",
+            color: "text-blue-500",
+            bgColor: "bg-blue-500/10",
+            rating: 86,
+          },
+          {
+            id: "d3",
+            name: "Behance",
+            category: "design",
+            subcategory: "inspiration",
+            desc: "Adobe 旗下的創意作品展示與發現平台。",
+            icon: "fa-brands fa-behance",
+            link: "https://www.behance.net",
+            color: "text-blue-600",
+            bgColor: "bg-blue-600/10",
+            rating: 86,
+          },
+          {
+            id: "a9",
+            name: "Hugging Face",
+            category: "ai",
+            subcategory: "code",
+            desc: "AI 界的 GitHub，開源模型與資料集中心。",
+            icon: "fa-solid fa-face-smile",
+            link: "https://huggingface.co",
+            color: "text-yellow-400",
+            bgColor: "bg-yellow-400/10",
+            rating: 85,
+          },
+          {
+            id: "e2",
+            name: "Stripe",
+            category: "examples",
+            subcategory: "saas",
+            desc: "支付基礎設施，開發者體驗與設計的標竿。",
+            icon: "fa-brands fa-stripe",
+            link: "https://stripe.com",
+            color: "text-violet-400",
+            bgColor: "bg-violet-400/10",
+            rating: 85,
+          },
+          {
+            id: "v16",
+            name: "MDN Web Docs",
+            category: "dev",
+            subcategory: "tools",
+            desc: "Web 開發者的權威參考文件與指南。",
+            icon: "fa-brands fa-firefox",
+            link: "https://developer.mozilla.org",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 84,
+          },
+          {
+            id: "v17",
+            name: "Stack Overflow",
+            category: "dev",
+            subcategory: "tools",
+            desc: "程式設計師問答社群，解決問題的好地方。",
+            icon: "fa-brands fa-stack-overflow",
+            link: "https://stackoverflow.com",
+            color: "text-orange-400",
+            bgColor: "bg-orange-400/10",
+            rating: 84,
+          },
+          {
+            id: "d5",
+            name: "Mobbin",
+            category: "design",
+            subcategory: "inspiration",
+            desc: "收錄全球頂尖 App 與網頁設計模式的圖庫。",
+            icon: "fa-solid fa-mobile-screen",
+            link: "https://mobbin.com",
+            color: "text-gray-200",
+            bgColor: "bg-gray-200/10",
+            rating: 83,
+          },
+          {
+            id: "e3",
+            name: "Raycast",
+            category: "examples",
+            subcategory: "saas",
+            desc: "Mac 上的極速啟動器，設計與效能極佳。",
+            icon: "fa-solid fa-bolt",
+            link: "https://raycast.com",
+            color: "text-red-400",
+            bgColor: "bg-red-400/10",
+            rating: 83,
+          },
+          {
+            id: "d9",
+            name: "Coolors",
+            category: "design",
+            subcategory: "assets",
+            desc: "超快速的配色方案生成器，支援鎖定顏色。",
+            icon: "fa-solid fa-palette",
+            link: "https://coolors.co",
+            color: "text-blue-400",
+            bgColor: "bg-blue-400/10",
+            rating: 82,
+          },
+          {
+            id: "a7",
+            name: "Runway",
+            category: "ai",
+            subcategory: "visual",
+            desc: "先進的 AI 影片生成與編輯工具。",
+            icon: "fa-solid fa-video",
+            link: "https://runwayml.com",
+            color: "text-pink-500",
+            bgColor: "bg-pink-500/10",
+            rating: 82,
+          },
+          {
+            id: "a18",
+            name: "Notion AI",
+            category: "ai",
+            subcategory: "chat",
+            desc: "直接在 Notion 筆記中使用的 AI 寫作助手。",
+            icon: "fa-solid fa-n",
+            link: "https://www.notion.so/product/ai",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 81,
+          },
+          {
+            id: "v27",
+            name: "Shadcn/ui",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "設計精美的可複製貼上 React 組件集合。",
+            icon: "fa-solid fa-layer-group",
+            link: "https://ui.shadcn.com",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 81,
+          },
+          {
+            id: "d21",
+            name: "Relume",
+            category: "design",
+            subcategory: "tools",
+            desc: "AI 驅動的網站架構生成與組件庫。",
+            icon: "fa-solid fa-sitemap",
+            link: "https://library.relume.io",
+            color: "text-black",
+            bgColor: "bg-white/20",
+            rating: 79,
+          },
+          {
+            id: "a8",
+            name: "ElevenLabs",
+            category: "ai",
+            subcategory: "visual",
+            desc: "最逼真的 AI 語音生成與文字轉語音服務。",
+            icon: "fa-solid fa-microphone",
+            link: "https://elevenlabs.io",
+            color: "text-gray-200",
+            bgColor: "bg-gray-200/10",
+            rating: 78,
+          },
+          {
+            id: "e4",
+            name: "Bruno Simon",
+            category: "examples",
+            subcategory: "portfolio",
+            desc: "著名的 3D WebGL 互動式賽車遊戲作品集。",
+            icon: "fa-solid fa-car",
+            link: "https://bruno-simon.com",
+            color: "text-red-500",
+            bgColor: "bg-red-500/10",
+            rating: 78,
+          },
+          {
+            id: "d7",
+            name: "Godly",
+            category: "design",
+            subcategory: "inspiration",
+            desc: "收集網路上最具美感與創意的網站範例。",
+            icon: "fa-solid fa-star",
+            link: "https://godly.website",
+            color: "text-orange-400",
+            bgColor: "bg-orange-400/10",
+            rating: 77,
+          },
+          {
+            id: "v26",
+            name: "Framer Motion",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "強大的 React 動畫函式庫。",
+            icon: "fa-solid fa-film",
+            link: "https://www.framer.com/motion/",
+            color: "text-purple-500",
+            bgColor: "bg-purple-500/10",
+            rating: 76,
+          },
+          {
+            id: "d29",
+            name: "Framer",
+            category: "design",
+            subcategory: "tools",
+            desc: "像設計一樣簡單地發布網站的工具。",
+            icon: "fa-solid fa-f",
+            link: "https://www.framer.com",
+            color: "text-blue-400",
+            bgColor: "bg-blue-400/10",
+            rating: 75,
+          },
+          {
+            id: "a12",
+            name: "Leonardo.ai",
+            category: "ai",
+            subcategory: "visual",
+            desc: "高品質的 AI 遊戲資產與藝術生成平台。",
+            icon: "fa-solid fa-image",
+            link: "https://leonardo.ai",
+            color: "text-purple-500",
+            bgColor: "bg-purple-500/10",
+            rating: 74,
+          },
+          {
+            id: "d14",
+            name: "LottieFiles",
+            category: "design",
+            subcategory: "assets",
+            desc: "輕量級、可縮放的網頁與 App 動畫格式。",
+            icon: "fa-solid fa-play-circle",
+            link: "https://lottiefiles.com",
+            color: "text-teal-400",
+            bgColor: "bg-teal-400/10",
+            rating: 73,
+          },
+          {
+            id: "e5",
+            name: "Awwwards",
+            category: "examples",
+            subcategory: "awards",
+            desc: "全球網頁設計獎項平台，尋找頂尖設計。",
+            icon: "fa-solid fa-trophy",
+            link: "https://www.awwwards.com",
+            color: "text-white",
+            bgColor: "bg-white/10",
+            rating: 72,
+          },
+          {
+            id: "a15",
+            name: "Codeium",
+            category: "ai",
+            subcategory: "code",
+            desc: "免費且強大的 AI 程式碼自動補全工具。",
+            icon: "fa-solid fa-laptop-code",
+            link: "https://codeium.com",
+            color: "text-green-400",
+            bgColor: "bg-green-400/10",
+            rating: 70,
+          },
+          {
+            id: "d8",
+            name: "SiteInspire",
+            category: "design",
+            subcategory: "inspiration",
+            desc: "專注於極簡與互動設計的網站靈感庫。",
+            icon: "fa-solid fa-globe",
+            link: "https://www.siteinspire.com",
+            color: "text-green-400",
+            bgColor: "bg-green-400/10",
+            rating: 68,
+          },
+          {
+            id: "d26",
+            name: "Apple HIG",
+            category: "design",
+            subcategory: "tools",
+            desc: "Apple 的人機介面設計指南。",
+            icon: "fa-brands fa-apple",
+            link: "https://developer.apple.com/design/",
+            color: "text-gray-100",
+            bgColor: "bg-gray-100/10",
+            rating: 68,
+          },
+          {
+            id: "d27",
+            name: "Material Design",
+            category: "design",
+            subcategory: "tools",
+            desc: "Google 的開源設計系統規範。",
+            icon: "fa-brands fa-google",
+            link: "https://m3.material.io",
+            color: "text-blue-500",
+            bgColor: "bg-blue-500/10",
+            rating: 68,
+          },
+          {
+            id: "v23",
+            name: "Python",
+            category: "dev",
+            subcategory: "backend",
+            desc: "應用廣泛、語法簡潔的程式語言。",
+            icon: "fa-brands fa-python",
+            link: "https://www.python.org",
+            color: "text-yellow-400",
+            bgColor: "bg-yellow-400/10",
+            rating: 68,
+          },
+          {
+            id: "a14",
+            name: "Suno",
+            category: "ai",
+            subcategory: "visual",
+            desc: "用 AI 創作完整的歌曲與音樂。",
+            icon: "fa-solid fa-music",
+            link: "https://suno.com",
+            color: "text-orange-500",
+            bgColor: "bg-orange-500/10",
+            rating: 67,
+          },
+          {
+            id: "v29",
+            name: "TanStack",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "高品質的前端開發工具庫 (Query, Table 等)。",
+            icon: "fa-solid fa-layer-group",
+            link: "https://tanstack.com",
+            color: "text-yellow-500",
+            bgColor: "bg-yellow-500/10",
+            rating: 67,
+          },
+          {
+            id: "d28",
+            name: "Laws of UX",
+            category: "design",
+            subcategory: "tools",
+            desc: "設計師必讀的使用者體驗心理學法則。",
+            icon: "fa-solid fa-scale-balanced",
+            link: "https://lawsofux.com",
+            color: "text-purple-500",
+            bgColor: "bg-purple-500/10",
+            rating: 66,
+          },
+          {
+            id: "v12",
+            name: "Astro",
+            category: "dev",
+            subcategory: "frontend",
+            desc: "為內容驅動網站打造的現代化 Web 框架。",
+            icon: "fa-solid fa-rocket",
+            link: "https://astro.build",
+            color: "text-orange-500",
+            bgColor: "bg-orange-500/10",
+            rating: 65,
+          },
+          {
+            id: "v18",
+            name: "Bun",
+            category: "dev",
+            subcategory: "backend",
+            desc: "快速的 JavaScript 全能工具包 (Runtime/PM/Bundler)。",
+            icon: "fa-solid fa-burger",
+            link: "https://bun.sh",
+            color: "text-yellow-200",
+            bgColor: "bg-yellow-200/10",
+            rating: 65,
+          },
+          {
+            id: "a20",
+            name: "Canva Magic",
+            category: "ai",
+            subcategory: "visual",
+            desc: "Canva 內建的 AI 設計工具套件。",
+            icon: "fa-solid fa-wand-magic-sparkles",
+            link: "https://www.canva.com/magic",
+            color: "text-cyan-500",
+            bgColor: "bg-cyan-500/10",
+            rating: 64,
+          },
+          {
+            id: "a19",
+            name: "Adobe Firefly",
+            category: "ai",
+            subcategory: "visual",
+            desc: "Adobe 的創意生成式 AI 模型。",
+            icon: "fa-solid fa-fire",
+            link: "https://www.adobe.com/sensei/generative-ai/firefly.html",
+            color: "text-red-500",
+            bgColor: "bg-red-500/10",
+            rating: 63,
+          },
+        ],
+      };
+
+      // --- APP STATE ---
+      const appState = {
+        resources: [],
+        currentFilter: "all",
+        currentSubFilter: "all",
+        searchQuery: "",
+        currentPage: 1,
+        isLoading: false,
+        hasMore: true,
+      };
+
+      const DOM = {
+        grid: document.getElementById("resourceGrid"),
+        searchInput: document.getElementById("searchInput"),
+        tabBtns: document.querySelectorAll(".tab-btn"),
+        subFilterContainer: document.getElementById("subFilterContainer"),
+        noResults: document.getElementById("noResults"),
+        initialLoading: document.getElementById("initialLoading"),
+        scrollSentinel: document.getElementById("scrollSentinel"),
+        scrollLoader: document.getElementById("scrollLoader"),
+        endOfList: document.getElementById("endOfList"),
+        // Removed modal elements from cache to enforce dynamic lookup
+      };
+
+      // --- LOGIC ---
+
+      const ApiService = {
+        async fetchResources(page, pageSize, filter, subFilter, searchQuery) {
+          // Mock delay removed for snappiness, kept synchronous feel
+          let filtered = MOCK_DATABASE.data.filter((item) => {
+            const matchesMain = filter === "all" || item.category === filter;
+            const matchesSub =
+              subFilter === "all" || item.subcategory === subFilter;
+            const matchesSearch =
+              item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              item.desc.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesMain && matchesSub && matchesSearch;
+          });
+
+          if (filter === "all" && searchQuery === "") {
+            filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+          }
+
+          const start = (page - 1) * pageSize;
+          const end = start + pageSize;
+          return {
+            data: filtered.slice(start, end),
+            hasMore: end < filtered.length,
+          };
+        },
+      };
+
+      async function initApp() {
+        renderSubFilters("all");
+        await loadResources(true);
+        initIntersectionObserver();
+        setupInteractions();
+      }
+
+      async function loadResources(isReset = false) {
+        if (appState.isLoading) return;
+        if (!isReset && !appState.hasMore) return;
+
+        appState.isLoading = true;
+
+        if (isReset) {
+          appState.currentPage = 1;
+          appState.resources = [];
+          DOM.grid.innerHTML = "";
+          DOM.initialLoading.classList.remove("hidden");
+          DOM.noResults.classList.add("hidden");
+          DOM.endOfList.classList.add("hidden");
+        } else {
+          DOM.scrollLoader.classList.remove("hidden");
+        }
+
+        try {
+          const response = await ApiService.fetchResources(
+            appState.currentPage,
+            PAGE_SIZE,
+            appState.currentFilter,
+            appState.currentSubFilter,
+            appState.searchQuery,
+          );
+
+          appState.resources = [...appState.resources, ...response.data];
+          appState.hasMore = response.hasMore;
+          appState.currentPage++;
+
+          DOM.initialLoading.classList.add("hidden");
+          DOM.scrollLoader.classList.add("hidden");
+
+          if (response.data.length > 0) renderGridItems(response.data);
+          if (appState.resources.length === 0)
+            DOM.noResults.classList.remove("hidden");
+          if (!appState.hasMore && appState.resources.length > 0)
+            DOM.endOfList.classList.remove("hidden");
+        } finally {
+          appState.isLoading = false;
+        }
+      }
+
+      function renderGridItems(items) {
+        items.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = `premium-card p-6 flex flex-col h-full cursor-pointer animate-fade-in group`;
+          card.style.animationDelay = `${index * 50}ms`;
+          card.onclick = () => openModal(item.id);
+
+          // Rating Logic
+          const stars = Math.round((item.rating || 60) / 20);
+          const starHtml = `<div class="flex gap-0.5 text-[10px] text-yellow-500/80">${Array(stars).fill('<i class="fa-solid fa-star"></i>').join("")}</div>`;
+
+          card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center text-xl ${item.color} shadow-sm group-hover:scale-110 transition-transform duration-300">
+                            <i class="${item.icon}"></i>
+                        </div>
+                        <div class="bg-white/5 border border-white/5 px-2 py-1 rounded-md">
+                            ${starHtml}
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-white font-semibold text-lg mb-1 tracking-tight group-hover:text-blue-400 transition-colors">${item.name}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed line-clamp-2">${item.desc}</p>
+                    
+                    <div class="mt-auto pt-4 flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] uppercase font-medium tracking-wider text-gray-500 border border-gray-800 px-2 py-0.5 rounded-full">${item.category}</span>
+                        ${item.subcategory ? `<span class="text-[10px] uppercase font-medium tracking-wider text-gray-500 border border-gray-800 px-2 py-0.5 rounded-full">${item.subcategory}</span>` : ""}
+                    </div>
+                `;
+          DOM.grid.appendChild(card);
+        });
+      }
+
+      function renderSubFilters(category) {
+        const container = DOM.subFilterContainer;
+        container.innerHTML = "";
+
+        if (category === "all" || !SUB_CATEGORIES[category]) {
+          container.style.height = "0px";
+          container.classList.remove("opacity-100", "mt-4");
+          container.classList.add("opacity-0");
+          return;
+        }
+
+        container.classList.remove("opacity-0", "h-0");
+        container.classList.add("opacity-100", "mt-4");
+        container.style.height = "auto";
+
+        SUB_CATEGORIES[category].forEach((sub) => {
+          const btn = document.createElement("button");
+          const isActive = appState.currentSubFilter === sub.id;
+          btn.className = `px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${isActive ? "bg-white text-black border-white" : "bg-white/5 text-gray-400 border-transparent hover:bg-white/10 hover:text-white"}`;
+          btn.textContent = sub.name;
+          btn.onclick = () => {
+            appState.currentSubFilter = sub.id;
+            renderSubFilters(category); // Re-render to update styling
+            loadResources(true);
+          };
+          container.appendChild(btn);
+        });
+      }
+
+      // --- INTERACTION SETUP ---
+      function setupInteractions() {
+        DOM.tabBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            DOM.tabBtns.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const cat = btn.dataset.category;
+            if (cat !== appState.currentFilter) {
+              appState.currentSubFilter = "all";
+              appState.currentFilter = cat;
+              renderSubFilters(cat);
+              loadResources(true);
+            }
+          });
+        });
+
+        let debounce;
+        DOM.searchInput.addEventListener("input", (e) => {
+          appState.searchQuery = e.target.value;
+          clearTimeout(debounce);
+          debounce = setTimeout(() => loadResources(true), 300);
+        });
+
+        // Keyboard shortcut
+        document.addEventListener("keydown", (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+            e.preventDefault();
+            DOM.searchInput.focus();
+          }
+        });
+      }
+
+      function resetFilters() {
+        appState.currentFilter = "all";
+        appState.currentSubFilter = "all";
+        appState.searchQuery = "";
+        DOM.searchInput.value = "";
+
+        DOM.tabBtns.forEach((b) => {
+          b.classList.remove("active");
+          if (b.dataset.category === "all") b.classList.add("active");
+        });
+
+        renderSubFilters("all");
+        loadResources(true);
+      }
+
+      // --- MODAL ---
+      function openModal(id) {
+        const item = MOCK_DATABASE.data.find((i) => i.id === id);
+        if (!item) return;
+
+        // Get elements dynamically to ensure they exist (fixes TypeErrors if DOM wasn't ready)
+        const titleEl = document.getElementById("modalTitle");
+        const descEl = document.getElementById("modalDesc");
+        const catEl = document.getElementById("modalCategory");
+        const subCatEl = document.getElementById("modalSubcategory");
+        const linkEl = document.getElementById("modalLink");
+        const iconEl = document.getElementById("modalIcon");
+        const iconContainerEl = document.getElementById("modalIconContainer");
+        const ratingEl = document.getElementById("modalRating");
+        const lightbox = document.getElementById("lightbox");
+        const backdrop = document.getElementById("lightboxBackdrop");
+        const content = document.getElementById("lightboxContent");
+
+        if (titleEl) titleEl.innerText = item.name;
+        if (descEl) descEl.innerText = item.desc;
+        if (catEl) catEl.innerText = item.category.toUpperCase();
+        if (subCatEl)
+          subCatEl.innerText = (item.subcategory || "General").toUpperCase();
+        if (linkEl) linkEl.href = item.link;
+
+        // Icon
+        if (iconEl) iconEl.className = item.icon;
+        if (iconContainerEl)
+          iconContainerEl.className = `w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shadow-xl absolute -bottom-10 border border-white/10 ${item.bgColor} ${item.color}`;
+
+        // Rating
+        if (ratingEl) {
+          ratingEl.innerHTML = `<span class="text-xs font-bold text-white mr-2">${item.rating || 80}</span>`;
+          for (let i = 0; i < 5; i++) {
+            ratingEl.innerHTML += `<i class="fa-solid fa-star text-[10px] ${i < Math.round((item.rating || 80) / 20) ? "text-yellow-400" : "text-gray-600"}"></i>`;
+          }
+        }
+
+        if (lightbox) {
+          lightbox.classList.remove("hidden");
+          setTimeout(() => {
+            if (backdrop) backdrop.classList.remove("opacity-0");
+            if (content) {
+              content.classList.remove("opacity-0", "scale-95");
+              content.classList.add("scale-100");
+            }
+          }, 10);
+          document.body.style.overflow = "hidden";
+        }
+      }
+
+      window.closeModal = function () {
+        const lightbox = document.getElementById("lightbox");
+        const backdrop = document.getElementById("lightboxBackdrop");
+        const content = document.getElementById("lightboxContent");
+
+        if (backdrop) backdrop.classList.add("opacity-0");
+        if (content) {
+          content.classList.remove("scale-100");
+          content.classList.add("opacity-0", "scale-95");
+        }
+        setTimeout(() => {
+          if (lightbox) lightbox.classList.add("hidden");
+          document.body.style.overflow = "";
+        }, 300);
+      };
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // --- INFINITE SCROLL ---
+      function initIntersectionObserver() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            if (
+              entries[0].isIntersecting &&
+              !appState.isLoading &&
+              appState.hasMore
+            ) {
+              loadResources(false);
+            }
+          },
+          { rootMargin: "100px" },
+        );
+        observer.observe(DOM.scrollSentinel);
+      }
+
+      // Init
+      initApp();
+    </script>
+  </body>
+</html>
