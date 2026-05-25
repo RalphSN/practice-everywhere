@@ -4,13 +4,65 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>台北的天空</title>
-    <style></style>
+    <style>
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .weather-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #999;
+        border-radius: 10px;
+        gap: 6px;
+        padding: 5px;
+      }
+      .refresh {
+        all: unset;
+        box-sizing: border-box;
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 20px;
+        border: 2px solid #999;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .refresh:hover {
+        background-color: #999;
+        color: #ffffff;
+      }
+    </style>
   </head>
   <body>
-    <div id="weather-box">⚡ 天氣資料連線中，請稍候...</div>
+    <div id="weather-box" class="container">⚡ 天氣資料連線中，請稍候...</div>
+    <button class="refresh">刷新</button>
     <script>
+      const container = document.querySelector("#weather-box");
+      const refreshBtn = document.querySelector(".refresh");
       const RALPH_KEY = "CWA-6D8D71DB-4861-49F4-A4F2-47FB1ADF0ECE";
       const API_URL = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-061?Authorization=${RALPH_KEY}`;
+      refreshBtn.addEventListener("click", refresh);
+
+      function renderWeather(data) {
+        container.innerHTML = "";
+        data.map(({ district, temp, updateTime }) => {
+          const time = updateTime.DataTime.slice(0, 16).replace("T", " ");
+          container.innerHTML += `
+            <div class="weather-card">
+              <div class="title">${district}</div>
+              <div class="temp">${temp}℃</div>
+              <div class="time">${time}</div>
+            </div>
+          `;
+        });
+      }
+
       async function fetchWeather() {
         try {
           const response = await fetch(API_URL);
@@ -30,10 +82,21 @@
             };
           });
           console.log(tempArr);
+          renderWeather(tempArr);
         } catch (error) {
           console.error("發生錯誤", error);
         }
       }
+
+      function refresh() {
+        container.innerHTML = `⚡ 天氣資料連線中，請稍候...`;
+        refreshBtn.disabled = true;
+        setTimeout(() => {
+          fetchWeather();
+          refreshBtn.disabled = false;
+        }, 500);
+      }
+
       fetchWeather();
     </script>
   </body>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youbike</title>
+    <style>
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #999;
+        border-radius: 10px;
+        gap: 6px;
+        padding: 5px;
+      }
+      .refresh {
+        all: unset;
+        box-sizing: border-box;
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 20px;
+        border: 2px solid #999;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .refresh:hover {
+        background-color: #999;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container" class="container">Youbike站點資料載入中...</div>
+    <button class="refresh">刷新</button>
+    <script>
+      const container = document.querySelector("#container");
+      const refreshBtn = document.querySelector(".refresh");
+      refreshBtn.addEventListener("click", refresh);
+
+      function refresh() {
+        container.innerHTML = `Youbike站點資料載入中...`;
+        fetchYoubike();
+      }
+
+      function renderCard(data) {
+        container.innerHTML = ``;
+        data.map(
+          ({
+            sarea,
+            sna,
+            available_rent_bikes,
+            available_return_bikes,
+            mday,
+          }) => {
+            container.innerHTML += `
+            <div class="card">
+              <h3>${sarea}</h3>  
+              <div class="title">${sna}</div>
+              <div>目前可借${available_rent_bikes}輛</div>
+              <div>目前可還空位${available_return_bikes}位</div>
+              <div>更新時間:${mday}</div>
+            </div>
+          `;
+          },
+        );
+      }
+
+      async function fetchYoubike() {
+        try {
+          const API_URL =
+            "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json";
+          const reponse = await fetch(API_URL);
+          const data = (await reponse.json())
+            .filter(({ sarea }) => sarea === "大安區")
+            .slice(0, 50)
+            .map((item) => {
+              return {
+                ...item,
+                sna: item.sna.replace("YouBike2.0_", ""),
+              };
+            });
+          renderCard(data);
+          console.log(data);
+        } catch (err) {
+          console.error("連線錯誤", err);
+        }
+      }
+      fetchYoubike();
+    </script>
+  </body>
+</html>
