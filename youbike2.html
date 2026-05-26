@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Class 封裝實戰演練</title>
+  </head>
+  <body>
+    <div id="daan-box">YouBike 封裝測試中...</div>
+
+    <script>
+      class YouBikeManager {
+        constructor(containerId, targetArea) {
+          this.container = document.querySelector(containerId);
+          this.area = targetArea;
+        }
+        async fetchData() {
+          try {
+            const API_URL =
+              "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json";
+            const response = await fetch(API_URL);
+            const data = (await response.json())
+              .filter(({ sarea }) => sarea === this.area)
+              .slice(0, 20)
+              .map((item) => {
+                return {
+                  ...item,
+                  sna: item.sna.replace("YouBike2.0", ""),
+                };
+              });
+            console.log(data);
+          } catch (err) {
+            console.error("連線失敗", err);
+          }
+        }
+      }
+
+      const daanViewer = new YouBikeManager("#daan-box", "大安區");
+      daanViewer.fetchData("大安區", "#daan-box");
+    </script>
+  </body>
+</html>
