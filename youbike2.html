@@ -4,15 +4,74 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Class 封裝實戰演練</title>
+    <style>
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #999;
+        border-radius: 10px;
+        gap: 6px;
+        padding: 5px;
+      }
+      .refresh {
+        all: unset;
+        box-sizing: border-box;
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 20px;
+        border: 2px solid #999;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .refresh:hover {
+        background-color: #999;
+        color: #ffffff;
+      }
+    </style>
   </head>
   <body>
-    <div id="daan-box">YouBike 封裝測試中...</div>
+    <h1>大安區</h1>
+    <div id="daan-box" class="container">YouBike 封裝測試中...</div>
+    <h1>中正區</h1>
+    <div id="zhzh-box" class="container">YouBike 封裝測試中...</div>
 
     <script>
       class YouBikeManager {
         constructor(containerId, targetArea) {
           this.container = document.querySelector(containerId);
           this.area = targetArea;
+        }
+        renderBike(data) {
+          this.container.innerHTML = "";
+          data.map(
+            ({
+              sarea,
+              sna,
+              available_rent_bikes,
+              available_return_bikes,
+              mday,
+            }) => {
+              this.container.innerHTML += `
+                <div class="card">
+                  <h3>${sarea}</h3>  
+                  <div class="title">${sna}</div>
+                  <div>目前可借${available_rent_bikes}輛</div>
+                  <div>目前可還空位${available_return_bikes}位</div>
+                  <div>更新時間:${mday}</div>
+                </div>
+              `;
+            },
+          );
         }
         async fetchData() {
           try {
@@ -25,9 +84,10 @@
               .map((item) => {
                 return {
                   ...item,
-                  sna: item.sna.replace("YouBike2.0", ""),
+                  sna: item.sna.replace("YouBike2.0_", ""),
                 };
               });
+            this.renderBike(data);
             console.log(data);
           } catch (err) {
             console.error("連線失敗", err);
@@ -36,7 +96,9 @@
       }
 
       const daanViewer = new YouBikeManager("#daan-box", "大安區");
-      daanViewer.fetchData("大安區", "#daan-box");
+      const zhzhViewer = new YouBikeManager("#zhzh-box", "中正區");
+      daanViewer.fetchData();
+      zhzhViewer.fetchData();
     </script>
   </body>
 </html>

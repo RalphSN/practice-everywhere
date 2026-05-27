@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>即時匯率比對</title>
+    <style>
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #999;
+        border-radius: 10px;
+        gap: 6px;
+        padding: 5px;
+      }
+      .refresh {
+        all: unset;
+        box-sizing: border-box;
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 20px;
+        border: 2px solid #999;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .refresh:hover {
+        background-color: #999;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>美金匯率</h1>
+    <div id="usd" class="container">美金匯率載入資訊中...</div>
+    <h1>日幣匯率</h1>
+    <div id="jpy" class="container">日幣匯率載入資訊中...</div>
+    <script>
+      class ExchangeRate {
+        constructor(country, containerId) {
+          this.container = document.querySelector(containerId);
+          this.API_URL = `https://open.er-api.com/v6/latest/${country}`;
+        }
+        renderCard(data) {
+          this.container.innerHTML = "";
+          const countries = ["TWD", "USD", "JPY", "CNY", "EUR", "AMD"];
+          countries
+            .filter((c) => c !== country)
+            .map((cName) => {
+              this.container.innerHTML = `
+                <div class="card">
+                  <h3>${data.rates[cName]}</h3>  
+                  <div>${cName}</div>
+                  <div>最後更新時間:${data.time_last_update_utc}</div>
+                </div>
+          `;
+            });
+        }
+        async fetchData() {
+          try {
+            const response = await fetch(this.API_URL);
+            const data = await response.json();
+            renderCard(data);
+            console.log(data);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }
+
+      const usdViewer = new ExchangeRate("USD", "#usd");
+      usdViewer.fetchData();
+    </script>
+  </body>
+</html>
