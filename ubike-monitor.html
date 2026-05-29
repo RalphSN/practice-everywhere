@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>U-bike站點監控</title>
+    <style>
+      .alert-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #999;
+        border-radius: 10px;
+        gap: 6px;
+        padding: 5px;
+      }
+      .refresh {
+        all: unset;
+        box-sizing: border-box;
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 20px;
+        border: 2px solid #999;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+      }
+
+      .refresh:hover {
+        background-color: #999;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <div id="panel-daan" class="monitor-panel">
+        <h2>大安區站點監控</h2>
+        <button class="btn-check">立即檢查車量</button>
+        <div class="update-time">尚未檢查</div>
+        <ul class="alert-list"></ul>
+      </div>
+
+      <div id="panel-xinyi" class="monitor-panel">
+        <h2>信義區站點監控</h2>
+        <button class="btn-check">立即檢查車量</button>
+        <div class="update-time">尚未檢查</div>
+        <ul class="alert-list"></ul>
+      </div>
+    </div>
+    <script>
+      class YouBikeAlertSystem {
+        constructor(containerId, targetArea) {
+          this.container = document.querySelector(containerId);
+          this.area = targetArea;
+          this.btn = this.container.querySelector(".btn-check");
+          this.list = this.container.querySelector(".alert-list");
+        }
+        async fetchData() {
+          try {
+            const API_URL =
+              "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json";
+            const response = await fetch(API_URL);
+            const data = (await response.json())
+              .filter(
+                ({ sarea, available_rent_bikes }) =>
+                  sarea === this.area && available_rent_bikes <= 3,
+              )
+              .map((item) => {
+                return {
+                  ...item,
+                  sna: item.sna.replace("YouBike2.0_", ""),
+                };
+              });
+
+            console.log(data);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        renderCard(data) {
+          data.map(
+            ({
+              sarea,
+              sna,
+              available_rent_bikes,
+              available_return_bikes,
+              mday,
+            }) => {
+              this.list.innerHTML = `
+              <li class="card">
+                  <div class="title">${sna}</div>
+                  <div>目前可借${available_rent_bikes}輛</div>
+                  <div>目前可還空位${available_return_bikes}位</div>
+                  <div>更新時間:${mday}</div>
+                </li>
+              `;
+            },
+          );
+        }
+        bindEvent() {
+          this.btn.addEventListener("click", () => {});
+        }
+      }
+
+      const daanViewer = new YouBikeAlertSystem("#panel-daan", "大安區");
+      daanViewer.fetchData();
+    </script>
+  </body>
+</html>

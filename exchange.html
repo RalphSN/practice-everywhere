@@ -49,14 +49,15 @@
         constructor(country, containerId) {
           this.container = document.querySelector(containerId);
           this.API_URL = `https://open.er-api.com/v6/latest/${country}`;
+          this.country = country;
         }
         renderCard(data) {
           this.container.innerHTML = "";
-          const countries = ["TWD", "USD", "JPY", "CNY", "EUR", "AMD"];
+          const countries = ["TWD", "USD", "JPY", "CNY", "EUR", "AMD", "HKD"];
           countries
-            .filter((c) => c !== country)
+            .filter((c) => c != this.country)
             .map((cName) => {
-              this.container.innerHTML = `
+              this.container.innerHTML += `
                 <div class="card">
                   <h3>${data.rates[cName]}</h3>  
                   <div>${cName}</div>
@@ -69,7 +70,7 @@
           try {
             const response = await fetch(this.API_URL);
             const data = await response.json();
-            renderCard(data);
+            this.renderCard(data);
             console.log(data);
           } catch (err) {
             console.error(err);
@@ -78,7 +79,9 @@
       }
 
       const usdViewer = new ExchangeRate("USD", "#usd");
+      const jpyViewer = new ExchangeRate("JPY", "#jpy");
       usdViewer.fetchData();
+      jpyViewer.fetchData();
     </script>
   </body>
 </html>

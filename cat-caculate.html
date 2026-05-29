@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>貓咪計數器</title>
+  </head>
+  <body>
+    <div class="row">
+      <div id="cat-brsh" class="card">
+        <h3 class="cat-name">載入中...</h3>
+        <div class="votes">目前票數：<span class="count">0</span> 票</div>
+        <button class="btn-vote">按讚支持</button>
+      </div>
+
+      <div id="cat-persian" class="card">
+        <h3 class="cat-name">載入中...</h3>
+        <div class="votes">目前票數：<span class="count">0</span> 票</div>
+        <button class="btn-vote">按讚支持</button>
+      </div>
+    </div>
+    <script>
+      class CatVoteManager {
+        constructor(containerId, catName) {
+          this.container = document.querySelector(containerId);
+          this.title = this.container.querySelector(".cat-name");
+          this.count = this.container.querySelector(".count");
+          this.btn = this.container.querySelector(".btn-vote");
+
+          this.catName = catName;
+          this.vote = 0;
+
+          this.init();
+          this.bindEvent();
+        }
+
+        init() {
+          this.title.innerHTML = this.catName;
+        }
+
+        bindEvent() {
+          this.btn.addEventListener("click", () => {
+            this.vote++;
+            this.count.innerHTML = this.vote;
+          });
+        }
+      }
+
+      const catA = new CatVoteManager("#cat-brsh", "英國短毛貓 🐱");
+      const catB = new CatVoteManager("#cat-persian", "波斯貓 🐈");
+    </script>
+  </body>
+</html>
