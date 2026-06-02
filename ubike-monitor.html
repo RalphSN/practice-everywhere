@@ -20,6 +20,12 @@
         gap: 6px;
         padding: 5px;
       }
+
+      .alert {
+        color: red;
+        font-weight: bold;
+      }
+
       .refresh {
         all: unset;
         box-sizing: border-box;
@@ -36,6 +42,7 @@
       .refresh:hover {
         background-color: #999;
         color: #ffffff;
+        font-size: 36px;
       }
     </style>
   </head>
@@ -62,6 +69,9 @@
           this.area = targetArea;
           this.btn = this.container.querySelector(".btn-check");
           this.list = this.container.querySelector(".alert-list");
+          this.time = this.container.querySelector(".update-time");
+
+          this.bindEvent();
         }
         async fetchData() {
           try {
@@ -79,13 +89,14 @@
                   sna: item.sna.replace("YouBike2.0_", ""),
                 };
               });
-
+            this.renderCard(data);
             console.log(data);
           } catch (err) {
             console.error(err);
           }
         }
         renderCard(data) {
+          this.list.innerHTML = "";
           data.map(
             ({
               sarea,
@@ -94,24 +105,28 @@
               available_return_bikes,
               mday,
             }) => {
-              this.list.innerHTML = `
+              this.list.innerHTML += `
               <li class="card">
                   <div class="title">${sna}</div>
-                  <div>目前可借${available_rent_bikes}輛</div>
+                  <div>目前可借<span class="alert"> ${available_rent_bikes} </span>輛</div>
                   <div>目前可還空位${available_return_bikes}位</div>
-                  <div>更新時間:${mday}</div>
                 </li>
               `;
             },
           );
         }
         bindEvent() {
-          this.btn.addEventListener("click", () => {});
+          this.btn.addEventListener("click", () => {
+            this.fetchData();
+            this.time.innerHTML = new Date();
+          });
         }
       }
 
       const daanViewer = new YouBikeAlertSystem("#panel-daan", "大安區");
+      const xinyiViewer = new YouBikeAlertSystem("#panel-xinyi", "信義區");
       daanViewer.fetchData();
+      xinyiViewer.fetchData();
     </script>
   </body>
 </html>

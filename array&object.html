@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const rawStats = {
+        no_12: {
+          name: "林志傑",
+          position: "主攻手",
+          details: { matches: 5, spikes: 45, blocks: 12 },
+        },
+        no_07: {
+          name: "陳建禎",
+          position: "舉球員",
+          details: { matches: 5, spikes: 15, blocks: 25 },
+        },
+        no_18: {
+          name: "黃培閎",
+          position: "舉球員",
+          details: { matches: 4, spikes: 8, blocks: 30 },
+        },
+        no_11: {
+          name: "石修智",
+          position: "副攻手",
+          details: { matches: 6, spikes: 50, blocks: 8 },
+        },
+      };
+
+      const data = Object.entries(rawStats).map((item) => {
+        return {
+          ...item,
+          no: item,
+          name: item.name,
+          position: item.position,
+          details: item.details,
+        };
+      });
+      console.log(data);
+    </script>
+  </body>
+</html>
