@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style></style>
+  </head>
+  <body>
+    <script>
+      // const players = [
+      //   { name: "林志傑", number: 12, position: "主攻手" },
+      //   { name: "陳建禎", number: 7, position: "舉球員" },
+      //   { name: "黃培閎", number: 18, position: "舉球員" },
+      // ];
+
+      // const result = players.reduce((acc, item) => {
+      //   const key = `no_${item.number}`;
+      //   acc[key] = { name: item.name, position: item.position };
+      //   return acc;
+      // }, {});
+
+      // console.log(result);
+
+      const runners = [
+        { name: "佐宏", country: "TW", pace: "4:15" },
+        { name: "大迫傑", country: "JP", pace: "3:50" },
+        { name: "基普喬格", country: "KE", pace: "2:50" },
+      ];
+
+      const result = runners.reduce((acc, item) => {
+        const key = `team_${item.country}`;
+        const { country, ...rest } = item;
+        acc[key] = rest;
+        return acc;
+      }, {});
+      console.log(result);
+    </script>
+  </body>
+</html>

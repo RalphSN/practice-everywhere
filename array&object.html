@@ -30,15 +30,15 @@
         },
       };
 
-      const data = Object.entries(rawStats).map((item) => {
-        return {
-          ...item,
-          no: item,
-          name: item.name,
-          position: item.position,
-          details: item.details,
-        };
-      });
+      const data = Object.values(rawStats)
+        .map((item) => {
+          const { details = {}, ...rest } = item;
+          return {
+            ...rest,
+            totalScore: (details.spikes ?? 0) + (details.blocks ?? 0),
+          };
+        })
+        .sort((a, b) => b.totalScore - a.totalScore);
       console.log(data);
     </script>
   </body>
